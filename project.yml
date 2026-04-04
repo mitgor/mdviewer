@@ -1,0 +1,35 @@
+name: MDViewer
+settings:
+  base:
+    MACOSX_DEPLOYMENT_TARGET: "13.0"
+    SWIFT_VERSION: "5.9"
+    GENERATE_INFOPLIST_FILE: NO
+packages:
+  swift-cmark:
+    url: https://github.com/apple/swift-cmark.git
+    branch: gfm
+targets:
+  MDViewer:
+    type: application
+    platform: macOS
+    sources:
+      - MDViewer
+    resources:
+      - MDViewer/Resources
+    settings:
+      INFOPLIST_FILE: MDViewer/Info.plist
+      PRODUCT_BUNDLE_IDENTIFIER: com.mdviewer.app
+    dependencies:
+      - package: swift-cmark
+        product: cmark-gfm
+      - package: swift-cmark
+        product: cmark-gfm-extensions
+  MDViewerTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - MDViewerTests
+    settings:
+      GENERATE_INFOPLIST_FILE: YES
+    dependencies:
+      - target: MDViewer

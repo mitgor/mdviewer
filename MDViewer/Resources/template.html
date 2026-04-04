@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+@font-face {
+    font-family: 'Latin Modern Roman';
+    src: url('lmroman10-regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: block;
+}
+@font-face {
+    font-family: 'Latin Modern Roman';
+    src: url('lmroman10-bold.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: block;
+}
+@font-face {
+    font-family: 'Latin Modern Mono';
+    src: url('lmmono10-regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: block;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    /* GPU-accelerate the scroll container for 120fps ProMotion */
+    -webkit-overflow-scrolling: touch;
+}
+
+body {
+    font-family: 'Latin Modern Roman', 'Charter', 'Georgia', serif;
+    font-size: 16px;
+    line-height: 1.6;
+    color: #333;
+    background: #fff;
+    padding: 40px 20px 80px;
+    max-width: 680px;
+    margin: 0 auto;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    transition: opacity 0.15s ease;
+}
+
+#content {
+    /* Promote to compositing layer for smooth scrolling */
+    will-change: transform;
+    transform: translateZ(0);
+}
+
+body.monospace {
+    font-family: 'Latin Modern Mono', 'SF Mono', 'Menlo', monospace;
+    line-height: 1.5;
+}
+
+body.loading {
+    opacity: 0;
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Latin Modern Roman', 'Charter', 'Georgia', serif;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+    line-height: 1.25;
+}
+
+h1 { font-size: 2em; letter-spacing: -0.5px; margin-top: 0; }
+h2 { font-size: 1.5em; letter-spacing: -0.3px; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1.1em; }
+h5 { font-size: 1em; }
+h6 { font-size: 0.9em; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* Paragraphs */
+p {
+    margin-bottom: 1em;
+    orphans: 3;
+    widows: 3;
+}
+
+/* Links */
+a {
+    color: #1a3a6b;
+    text-decoration: none;
+}
+a:hover {
+    text-decoration: underline;
+}
+
+/* Lists */
+ul, ol {
+    margin-bottom: 1em;
+    padding-left: 1.8em;
+}
+li {
+    margin-bottom: 0.3em;
+}
+li > ul, li > ol {
+    margin-bottom: 0;
+}
+
+/* Task lists (GFM) */
+ul.contains-task-list {
+    list-style: none;
+    padding-left: 0;
+}
+li.task-list-item {
+    position: relative;
+    padding-left: 1.5em;
+}
+li.task-list-item input[type="checkbox"] {
+    position: absolute;
+    left: 0;
+    top: 0.3em;
+}
+
+/* Block quotes */
+blockquote {
+    border-left: 3px solid #ccc;
+    padding-left: 1em;
+    margin: 1em 0;
+    font-style: italic;
+    color: #555;
+}
+blockquote p:last-child {
+    margin-bottom: 0;
+}
+
+/* Code — inline */
+code {
+    font-family: 'Latin Modern Mono', 'SF Mono', 'Menlo', monospace;
+    font-size: 0.9em;
+    background: #f8f6f0;
+    padding: 0.15em 0.35em;
+    border-radius: 3px;
+}
+
+/* Code — blocks */
+pre {
+    margin: 1em 0;
+    background: #faf8f2;
+    border: 1px solid #e8e4d8;
+    border-radius: 4px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    line-height: 1.45;
+}
+pre code {
+    background: none;
+    padding: 0;
+    border-radius: 0;
+    font-size: 0.85em;
+}
+
+/* Syntax highlighting — CSS classes injected by renderer */
+.kw { color: #8959a8; }
+.fn { color: #4271ae; }
+.st { color: #718c00; }
+.cn { color: #f5871f; }
+.cm { color: #8e908c; font-style: italic; }
+.ty { color: #c82829; }
+
+/* Tables — booktabs style */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1em 0;
+    font-size: 0.95em;
+}
+thead {
+    border-top: 2px solid #333;
+    border-bottom: 1px solid #333;
+}
+tbody {
+    border-bottom: 2px solid #333;
+}
+th {
+    font-weight: 700;
+    text-align: left;
+    padding: 6px 12px 6px 0;
+}
+td {
+    padding: 4px 12px 4px 0;
+}
+tr:nth-child(even) {
+    background: transparent;
+}
+
+/* Horizontal rule */
+hr {
+    border: none;
+    border-top: 1px solid #ccc;
+    margin: 2em 0;
+}
+
+/* Images */
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 1em auto;
+}
+
+/* Mermaid diagram containers */
+.mermaid-placeholder {
+    background: #f9f9f7;
+    border: 1px solid #e8e4d8;
+    border-radius: 4px;
+    padding: 20px;
+    margin: 1em 0;
+    text-align: center;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.mermaid-rendered {
+    text-align: center;
+    margin: 1em 0;
+    padding: 10px 0;
+    animation: fadeIn 0.3s ease;
+    will-change: opacity;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Mermaid SVG overrides for LaTeX consistency */
+.mermaid-rendered svg {
+    font-family: 'Latin Modern Roman', serif !important;
+    max-width: 100%;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #aaa;
+}
+</style>
+</head>
+<body class="loading">
+<div id="content">{{FIRST_CHUNK}}</div>
+<script src="mermaid.min.js"></script>
+<script>
+(function() {
+    // Signal first paint to native side
+    document.addEventListener('DOMContentLoaded', function() {
+        document.body.classList.remove('loading');
+        window.webkit.messageHandlers.firstPaint.postMessage('ready');
+    });
+
+    // Progressive content loading
+    window.appendChunk = function(html) {
+        var content = document.getElementById('content');
+        var temp = document.createElement('div');
+        temp.innerHTML = html;
+        while (temp.firstChild) {
+            content.appendChild(temp.firstChild);
+        }
+    };
+
+    // Mermaid initialization — async, after first paint
+    window.initMermaid = function() {
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'neutral',
+            themeVariables: {
+                fontFamily: '"Latin Modern Roman", serif',
+                fontSize: '14px',
+                primaryColor: '#fff',
+                primaryBorderColor: '#555',
+                lineColor: '#555',
+                textColor: '#333'
+            }
+        });
+
+        var placeholders = document.querySelectorAll('.mermaid-placeholder');
+        renderNextDiagram(Array.from(placeholders), 0);
+    };
+
+    function renderNextDiagram(placeholders, index) {
+        if (index >= placeholders.length) return;
+
+        var el = placeholders[index];
+        var code = el.getAttribute('data-mermaid-source');
+        var id = 'mermaid-' + index;
+
+        mermaid.render(id, code).then(function(result) {
+            var container = document.createElement('div');
+            container.className = 'mermaid-rendered';
+            container.innerHTML = result.svg;
+            el.replaceWith(container);
+            requestAnimationFrame(function() {
+                renderNextDiagram(placeholders, index + 1);
+            });
+        }).catch(function() {
+            var pre = document.createElement('pre');
+            var codeEl = document.createElement('code');
+            codeEl.textContent = code;
+            pre.appendChild(codeEl);
+            el.replaceWith(pre);
+            requestAnimationFrame(function() {
+                renderNextDiagram(placeholders, index + 1);
+            });
+        });
+    }
+
+    // Monospace toggle support
+    window.toggleMonospace = function() {
+        document.body.classList.toggle('monospace');
+    };
+})();
+</script>
+</body>
+</html>
