@@ -10,7 +10,12 @@ final class WebContentView: NSView, WKNavigationDelegate, WKScriptMessageHandler
 
     private let webView: WKWebView
     private var remainingChunks: [String] = []
+    private var hasMermaid = false
     private var isMonospace = false
+
+    /// Mermaid JS source, loaded lazily from bundle on first use
+    private static var mermaidJS: String?
+    private static var mermaidJSLoaded = false
 
     override init(frame: NSRect) {
         let config = WKWebViewConfiguration()
@@ -41,8 +46,9 @@ final class WebContentView: NSView, WKNavigationDelegate, WKScriptMessageHandler
         fatalError("init(coder:) not supported")
     }
 
-    func loadContent(page: String, remainingChunks: [String]) {
+    func loadContent(page: String, remainingChunks: [String], hasMermaid: Bool) {
         self.remainingChunks = remainingChunks
+        self.hasMermaid = hasMermaid
         let resourceURL = Bundle.main.resourceURL ?? Bundle.main.bundleURL
         webView.loadHTMLString(page, baseURL: resourceURL)
     }
@@ -58,17 +64,17 @@ final class WebContentView: NSView, WKNavigationDelegate, WKScriptMessageHandler
         if message.name == "firstPaint" {
             delegate?.webContentViewDidFinishFirstPaint(self)
             injectRemainingChunks()
-            initMermaid()
+            if hasMermaid {
+                loadAndInitMermaid()
+            }
         }
     }
 
     // MARK: - Private
 
-    /// Batch all remaining chunks into a single JS call instead of N separate bridge crossings.
     private func injectRemainingChunks() {
         guard !remainingChunks.isEmpty else { return }
 
-        // Single-pass escape all chunks, then send one JS call
         var jsChunks = "["
         for (index, chunk) in remainingChunks.enumerated() {
             if index > 0 { jsChunks += "," }
@@ -98,8 +104,21 @@ final class WebContentView: NSView, WKNavigationDelegate, WKScriptMessageHandler
         remainingChunks = []
     }
 
-    private func initMermaid() {
-        let js = "setTimeout(function(){ window.initMermaid(); }, 50);"
-        webView.evaluateJavaScript(js)
+    /// Load mermaid.js only when the document has mermaid blocks.
+    /// Cached after first load — subsequent documents reuse the parsed JS.
+    private func loadAndInitMermaid() {
+        if !Self.mermaidJSLoaded {
+            Self.mermaidJSLoaded = true
+            if let url = Bundle.main.url(forResource: "mermaid.min", withExtension: "js") {
+                Self.mermaidJS = try? String(contentsOf: url, encoding: .utf8)
+            }
+        }
+
+        guard let js = Self.mermaidJS else { return }
+
+        // Inject mermaid.js then initialize
+        webView.evaluateJavaScript(js) { [weak self] _, _ in
+            self?.webView.evaluateJavaScript("window.initMermaid()")
+        }
     }
 }

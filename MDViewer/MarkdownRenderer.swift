@@ -5,12 +5,29 @@ import cmark_gfm_extensions
 struct RenderResult {
     let page: String
     let remainingChunks: [String]
+    let hasMermaid: Bool
+}
+
+/// Pre-split template for fast concatenation (no string scanning at render time).
+struct SplitTemplate {
+    let prefix: String
+    let suffix: String
+
+    init(templateHTML: String) {
+        let marker = "{{FIRST_CHUNK}}"
+        if let range = templateHTML.range(of: marker) {
+            prefix = String(templateHTML[templateHTML.startIndex..<range.lowerBound])
+            suffix = String(templateHTML[range.upperBound..<templateHTML.endIndex])
+        } else {
+            prefix = templateHTML
+            suffix = ""
+        }
+    }
 }
 
 final class MarkdownRenderer {
     private let chunkThreshold = 50
 
-    // Cached regex patterns — compiled once, reused every render
     private static let mermaidRegex = try! NSRegularExpression(
         pattern: #"<pre><code class="language-mermaid">([\s\S]*?)</code></pre>"#
     )
@@ -22,25 +39,26 @@ final class MarkdownRenderer {
         cmark_gfm_core_extensions_ensure_registered()
     }
 
-    func render(markdown: String) -> [String] {
+    func render(markdown: String) -> (chunks: [String], hasMermaid: Bool) {
         let html = parseMarkdownToHTML(markdown)
-        let processed = processMermaidBlocks(html)
-        return chunkHTML(processed)
+        let (processed, hasMermaid) = processMermaidBlocks(html)
+        return (chunkHTML(processed), hasMermaid)
     }
 
-    func renderFullPage(markdown: String, templateHTML: String) -> RenderResult {
-        let chunks = render(markdown: markdown)
+    func renderFullPage(markdown: String, template: SplitTemplate) -> RenderResult {
+        let (chunks, hasMermaid) = render(markdown: markdown)
         let firstChunk = chunks.first ?? ""
         let remaining = Array(chunks.dropFirst())
-        let page = templateHTML.replacingOccurrences(of: "{{FIRST_CHUNK}}", with: firstChunk)
-        return RenderResult(page: page, remainingChunks: remaining)
+        // Direct concatenation — no string scanning
+        let page = template.prefix + firstChunk + template.suffix
+        return RenderResult(page: page, remainingChunks: remaining, hasMermaid: hasMermaid)
     }
 
-    func renderFullPage(fileURL: URL, templateHTML: String) -> RenderResult? {
+    func renderFullPage(fileURL: URL, template: SplitTemplate) -> RenderResult? {
         guard let markdown = try? String(contentsOf: fileURL, encoding: .utf8) else {
             return nil
         }
-        return renderFullPage(markdown: markdown, templateHTML: templateHTML)
+        return renderFullPage(markdown: markdown, template: template)
     }
 
     // MARK: - Private
@@ -81,10 +99,10 @@ final class MarkdownRenderer {
         return String(cString: htmlCStr)
     }
 
-    private func processMermaidBlocks(_ html: String) -> String {
+    private func processMermaidBlocks(_ html: String) -> (String, Bool) {
         let nsString = html as NSString
         let matches = Self.mermaidRegex.matches(in: html, range: NSRange(location: 0, length: nsString.length))
-        guard !matches.isEmpty else { return html }
+        guard !matches.isEmpty else { return (html, false) }
 
         var result = html
         for match in matches.reversed() {
@@ -93,7 +111,6 @@ final class MarkdownRenderer {
             let mermaidSource = nsString.substring(with: codeRange)
                 .trimmingCharacters(in: .whitespacesAndNewlines)
 
-            // Single-pass: decode HTML entities from cmark, then re-encode for attribute
             let decoded = decodeHTMLEntities(mermaidSource)
             let encoded = encodeHTMLEntities(decoded)
 
@@ -106,13 +123,11 @@ final class MarkdownRenderer {
             result = (result as NSString).replacingCharacters(in: fullRange, with: placeholder)
         }
 
-        return result
+        return (result, true)
     }
 
-    /// Single-pass HTML entity decoding (cmark output → raw text)
     private func decodeHTMLEntities(_ input: String) -> String {
         var result = input
-        // Order matters: decode &amp; last to avoid double-decoding
         result = result.replacingOccurrences(of: "&lt;", with: "<")
         result = result.replacingOccurrences(of: "&gt;", with: ">")
         result = result.replacingOccurrences(of: "&quot;", with: "\"")
@@ -120,7 +135,6 @@ final class MarkdownRenderer {
         return result
     }
 
-    /// Single-pass HTML entity encoding (raw text → safe attribute value)
     private func encodeHTMLEntities(_ input: String) -> String {
         var result = ""
         result.reserveCapacity(input.count + input.count / 8)

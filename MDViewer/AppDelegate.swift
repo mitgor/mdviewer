@@ -3,7 +3,7 @@ import UniformTypeIdentifiers
 
 class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
     private let renderer = MarkdownRenderer()
-    private var templateHTML: String = ""
+    private var template: SplitTemplate?
     private var windows: [MarkdownWindow] = []
     private var openedViaDelegate = false
 
@@ -14,7 +14,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
         setupMenu()
         NSApp.activate(ignoringOtherApps: true)
 
-        // Handle file passed via CLI args — only if not already opened via delegate
         DispatchQueue.main.async { [weak self] in
             guard let self = self, !self.openedViaDelegate else { return }
             let args = ProcessInfo.processInfo.arguments
@@ -81,29 +80,45 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
     // MARK: - Private
 
     private func ensureTemplateLoaded() {
-        if templateHTML.isEmpty {
+        if template == nil {
             loadTemplate()
             setupMenu()
         }
     }
 
     private func loadTemplate() {
+        guard template == nil else { return }
         guard let templateURL = Bundle.main.url(forResource: "template", withExtension: "html") else {
             fatalError("template.html not found in bundle")
         }
-        templateHTML = (try? String(contentsOf: templateURL, encoding: .utf8)) ?? ""
+        let html = (try? String(contentsOf: templateURL, encoding: .utf8)) ?? ""
+        template = SplitTemplate(templateHTML: html)
     }
 
     private func openFile(_ url: URL) {
-        guard let result = renderer.renderFullPage(fileURL: url, templateHTML: templateHTML) else {
-            let alert = NSAlert()
-            alert.messageText = "Cannot Open File"
-            alert.informativeText = "The file \(url.lastPathComponent) could not be read."
-            alert.alertStyle = .warning
-            alert.runModal()
-            return
-        }
+        guard let tmpl = template else { return }
 
+        // Parse markdown on background thread — keeps UI responsive for large files
+        let renderer = self.renderer
+        DispatchQueue.global(qos: .userInitiated).async {
+            guard let result = renderer.renderFullPage(fileURL: url, template: tmpl) else {
+                DispatchQueue.main.async {
+                    let alert = NSAlert()
+                    alert.messageText = "Cannot Open File"
+                    alert.informativeText = "The file \(url.lastPathComponent) could not be read."
+                    alert.alertStyle = .warning
+                    alert.runModal()
+                }
+                return
+            }
+
+            DispatchQueue.main.async { [weak self] in
+                self?.displayResult(result, for: url)
+            }
+        }
+    }
+
+    private func displayResult(_ result: RenderResult, for url: URL) {
         let contentView = WebContentView(frame: .zero)
         contentView.delegate = self
 
@@ -119,7 +134,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
             self?.windows.removeAll { $0 === closedWindow }
         }
 
-        contentView.loadContent(page: result.page, remainingChunks: result.remainingChunks)
+        contentView.loadContent(
+            page: result.page,
+            remainingChunks: result.remainingChunks,
+            hasMermaid: result.hasMermaid
+        )
         window.makeKeyAndOrderFront(nil)
         window.alphaValue = 1.0
     }
