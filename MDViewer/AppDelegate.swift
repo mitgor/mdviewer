@@ -4,23 +4,24 @@ import UniformTypeIdentifiers
 class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
     private let renderer = MarkdownRenderer()
     private var templateHTML: String = ""
-    private var preWarmedContentView: WebContentView?
     private var windows: [MarkdownWindow] = []
+    private var openedViaDelegate = false
 
     // MARK: - App Lifecycle
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         loadTemplate()
-        preWarmWebView()
         setupMenu()
         NSApp.activate(ignoringOtherApps: true)
 
-        // Handle file passed via command-line arguments
-        let args = ProcessInfo.processInfo.arguments
-        if args.count > 1 {
-            let filePath = args[1]
-            let url = URL(fileURLWithPath: filePath)
-            openFile(url)
+        // Handle file passed via CLI args — only if not already opened via delegate
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self, !self.openedViaDelegate else { return }
+            let args = ProcessInfo.processInfo.arguments
+            if args.count > 1 {
+                let url = URL(fileURLWithPath: args[1])
+                self.openFile(url)
+            }
         }
     }
 
@@ -31,9 +32,19 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
     // MARK: - File Opening
 
     func application(_ sender: NSApplication, open urls: [URL]) {
+        openedViaDelegate = true
+        ensureTemplateLoaded()
         for url in urls {
             openFile(url)
         }
+    }
+
+    func application(_ sender: NSApplication, openFile filename: String) -> Bool {
+        openedViaDelegate = true
+        ensureTemplateLoaded()
+        let url = URL(fileURLWithPath: filename)
+        openFile(url)
+        return true
     }
 
     // MARK: - Menu Actions
@@ -69,18 +80,18 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
 
     // MARK: - Private
 
+    private func ensureTemplateLoaded() {
+        if templateHTML.isEmpty {
+            loadTemplate()
+            setupMenu()
+        }
+    }
+
     private func loadTemplate() {
         guard let templateURL = Bundle.main.url(forResource: "template", withExtension: "html") else {
             fatalError("template.html not found in bundle")
         }
         templateHTML = (try? String(contentsOf: templateURL, encoding: .utf8)) ?? ""
-    }
-
-    private func preWarmWebView() {
-        let contentView = WebContentView(frame: .zero)
-        contentView.delegate = self
-        contentView.preWarm(templateHTML: templateHTML)
-        preWarmedContentView = contentView
     }
 
     private func openFile(_ url: URL) {
@@ -93,13 +104,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
             return
         }
 
-        let contentView: WebContentView
-        if let preWarmed = preWarmedContentView {
-            contentView = preWarmed
-            preWarmedContentView = nil
-        } else {
-            contentView = WebContentView(frame: .zero)
-        }
+        let contentView = WebContentView(frame: .zero)
         contentView.delegate = self
 
         let window = MarkdownWindow(fileURL: url, contentView: contentView)
@@ -115,8 +120,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
         }
 
         contentView.loadContent(page: result.page, remainingChunks: result.remainingChunks)
-
-        // Show window immediately
         window.makeKeyAndOrderFront(nil)
         window.alphaValue = 1.0
     }
@@ -124,7 +127,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
     private func setupMenu() {
         let mainMenu = NSMenu()
 
-        // App menu
         let appMenuItem = NSMenuItem()
         let appMenu = NSMenu()
         appMenu.addItem(withTitle: "About MDViewer", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
@@ -133,7 +135,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
         appMenuItem.submenu = appMenu
         mainMenu.addItem(appMenuItem)
 
-        // File menu
         let fileMenuItem = NSMenuItem()
         let fileMenu = NSMenu(title: "File")
         fileMenu.addItem(withTitle: "Open...", action: #selector(openDocument(_:)), keyEquivalent: "o")
@@ -142,7 +143,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
         fileMenuItem.submenu = fileMenu
         mainMenu.addItem(fileMenuItem)
 
-        // View menu
         let viewMenuItem = NSMenuItem()
         let viewMenu = NSMenu(title: "View")
         viewMenu.addItem(withTitle: "Toggle Monospace", action: #selector(toggleMonospace(_:)), keyEquivalent: "m")

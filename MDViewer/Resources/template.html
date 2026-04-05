@@ -62,9 +62,7 @@ body.monospace {
     line-height: 1.5;
 }
 
-body.loading {
-    opacity: 0;
-}
+/* Reserved */
 
 /* Headings */
 h1, h2, h3, h4, h5, h6 {
@@ -268,14 +266,13 @@ img {
 }
 </style>
 </head>
-<body class="loading">
+<body>
 <div id="content">{{FIRST_CHUNK}}</div>
-<script src="mermaid.min.js"></script>
+<script src="mermaid.min.js" defer></script>
 <script>
 (function() {
     // Signal first paint to native side
     document.addEventListener('DOMContentLoaded', function() {
-        document.body.classList.remove('loading');
         window.webkit.messageHandlers.firstPaint.postMessage('ready');
     });
 
@@ -291,6 +288,7 @@ img {
 
     // Mermaid initialization — async, after first paint
     window.initMermaid = function() {
+        if (typeof mermaid === 'undefined') return;
         mermaid.initialize({
             startOnLoad: false,
             theme: 'neutral',
