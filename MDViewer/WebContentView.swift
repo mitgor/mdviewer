@@ -105,16 +105,7 @@ final class WebContentView: NSView, WKNavigationDelegate, WKScriptMessageHandler
     }
 
     func printContent() {
-        let printInfo = NSPrintInfo.shared
-        printInfo.topMargin = 36
-        printInfo.bottomMargin = 36
-        printInfo.leftMargin = 36
-        printInfo.rightMargin = 36
-
-        let printOp = webView.printOperation(with: printInfo)
-        printOp.showsPrintPanel = true
-        printOp.showsProgressPanel = true
-        printOp.run()
+        preparePrintAndRun(showPanel: true, saveToURL: nil)
     }
 
     func exportPDF(filename: String) {
@@ -125,33 +116,50 @@ final class WebContentView: NSView, WKNavigationDelegate, WKScriptMessageHandler
 
         panel.begin { [weak self] response in
             guard response == .OK, let url = panel.url else { return }
-            self?.createPDF(to: url)
+            self?.preparePrintAndRun(showPanel: false, saveToURL: url)
         }
     }
 
-    private func createPDF(to url: URL) {
-        webView.createPDF(configuration: WKPDFConfiguration()) { result in
-            DispatchQueue.main.async {
-                switch result {
-                case .success(let data):
-                    do {
-                        try data.write(to: url)
-                        NSWorkspace.shared.activateFileViewerSelecting([url])
-                    } catch {
-                        let alert = NSAlert()
-                        alert.messageText = "PDF Export Failed"
-                        alert.informativeText = error.localizedDescription
-                        alert.alertStyle = .warning
-                        alert.runModal()
-                    }
-                case .failure(let error):
-                    let alert = NSAlert()
-                    alert.messageText = "PDF Export Failed"
-                    alert.informativeText = error.localizedDescription
-                    alert.alertStyle = .warning
-                    alert.runModal()
-                }
+    private func preparePrintAndRun(showPanel: Bool, saveToURL: URL?) {
+        // Strip GPU compositing before print — WKWebView print renderer can't capture composited layers
+        let stripJS = "document.getElementById('content').style.willChange='auto';document.getElementById('content').style.transform='none';"
+        webView.evaluateJavaScript(stripJS) { [weak self] _, _ in
+            guard let self = self else { return }
+
+            // Small delay to let the recomposite happen
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                self.runPrintOperation(showPanel: showPanel, saveToURL: saveToURL)
             }
+        }
+    }
+
+    private func runPrintOperation(showPanel: Bool, saveToURL: URL?) {
+        let printInfo = NSPrintInfo.shared.copy() as! NSPrintInfo
+        printInfo.topMargin = 36
+        printInfo.bottomMargin = 36
+        printInfo.leftMargin = 36
+        printInfo.rightMargin = 36
+        printInfo.isHorizontallyCentered = true
+        printInfo.isVerticallyCentered = false
+
+        if let url = saveToURL {
+            // Direct PDF export — no print panel
+            printInfo.jobDisposition = .save
+            printInfo.dictionary()[NSPrintInfo.AttributeKey.jobSavingURL] = url
+        }
+
+        let printOp = webView.printOperation(with: printInfo)
+        printOp.showsPrintPanel = showPanel
+        printOp.showsProgressPanel = true
+
+        printOp.run()
+
+        // Restore GPU compositing after print completes
+        let restoreJS = "document.getElementById('content').style.willChange='transform';document.getElementById('content').style.transform='translateZ(0)';"
+        webView.evaluateJavaScript(restoreJS)
+
+        if let url = saveToURL {
+            NSWorkspace.shared.activateFileViewerSelecting([url])
         }
     }
 
