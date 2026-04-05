@@ -104,6 +104,49 @@ final class WebContentView: NSView, WKNavigationDelegate, WKScriptMessageHandler
         remainingChunks = []
     }
 
+    func printContent() {
+        let printInfo = NSPrintInfo.shared
+        printInfo.topMargin = 36
+        printInfo.bottomMargin = 36
+        printInfo.leftMargin = 36
+        printInfo.rightMargin = 36
+
+        let printOp = webView.printOperation(with: printInfo)
+        printOp.showsPrintPanel = true
+        printOp.showsProgressPanel = true
+        printOp.run()
+    }
+
+    func exportPDF(filename: String) {
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.pdf]
+        panel.nameFieldStringValue = filename.replacingOccurrences(of: ".md", with: ".pdf")
+            .replacingOccurrences(of: ".markdown", with: ".pdf")
+
+        panel.begin { [weak self] response in
+            guard response == .OK, let url = panel.url else { return }
+            self?.createPDF(to: url)
+        }
+    }
+
+    private func createPDF(to url: URL) {
+        let config = WKPDFConfiguration()
+        config.rect = .zero // Full page
+
+        webView.createPDF(configuration: config) { result in
+            switch result {
+            case .success(let data):
+                try? data.write(to: url)
+            case .failure:
+                let alert = NSAlert()
+                alert.messageText = "PDF Export Failed"
+                alert.informativeText = "Could not generate PDF."
+                alert.alertStyle = .warning
+                alert.runModal()
+            }
+        }
+    }
+
     /// Load mermaid.js only when the document has mermaid blocks.
     /// Cached after first load — subsequent documents reuse the parsed JS.
     private func loadAndInitMermaid() {
