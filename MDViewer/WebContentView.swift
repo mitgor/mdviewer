@@ -130,19 +130,27 @@ final class WebContentView: NSView, WKNavigationDelegate, WKScriptMessageHandler
     }
 
     private func createPDF(to url: URL) {
-        let config = WKPDFConfiguration()
-        config.rect = .zero // Full page
-
-        webView.createPDF(configuration: config) { result in
-            switch result {
-            case .success(let data):
-                try? data.write(to: url)
-            case .failure:
-                let alert = NSAlert()
-                alert.messageText = "PDF Export Failed"
-                alert.informativeText = "Could not generate PDF."
-                alert.alertStyle = .warning
-                alert.runModal()
+        webView.createPDF(configuration: WKPDFConfiguration()) { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let data):
+                    do {
+                        try data.write(to: url)
+                        NSWorkspace.shared.activateFileViewerSelecting([url])
+                    } catch {
+                        let alert = NSAlert()
+                        alert.messageText = "PDF Export Failed"
+                        alert.informativeText = error.localizedDescription
+                        alert.alertStyle = .warning
+                        alert.runModal()
+                    }
+                case .failure(let error):
+                    let alert = NSAlert()
+                    alert.messageText = "PDF Export Failed"
+                    alert.informativeText = error.localizedDescription
+                    alert.alertStyle = .warning
+                    alert.runModal()
+                }
             }
         }
     }
