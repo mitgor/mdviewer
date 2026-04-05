@@ -74,11 +74,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
         window.contentViewWrapper.printContent()
     }
 
-    @objc func exportPDF(_ sender: Any?) {
-        guard let window = NSApp.keyWindow as? MarkdownWindow else { return }
-        window.contentViewWrapper.exportPDF(filename: window.title)
-    }
-
     // MARK: - WebContentViewDelegate
 
     func webContentViewDidFinishFirstPaint(_ view: WebContentView) {
@@ -168,9 +163,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
         let fileMenu = NSMenu(title: "File")
         fileMenu.addItem(withTitle: "Open...", action: #selector(openDocument(_:)), keyEquivalent: "o")
         fileMenu.addItem(.separator())
-        fileMenu.addItem(withTitle: "Export as PDF...", action: #selector(exportPDF(_:)), keyEquivalent: "e")
-        fileMenu.addItem(.separator())
-        fileMenu.addItem(withTitle: "Print...", action: #selector(printDocument(_:)), keyEquivalent: "p")
+        fileMenu.addItem(withTitle: "Print / Export PDF...", action: #selector(printDocument(_:)), keyEquivalent: "p")
         fileMenu.addItem(.separator())
         fileMenu.addItem(withTitle: "Close", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
         fileMenuItem.submenu = fileMenu

@@ -58,19 +58,6 @@ final class WebContentView: NSView, WKNavigationDelegate, WKScriptMessageHandler
         webView.evaluateJavaScript("window.toggleMonospace()")
     }
 
-    // MARK: - WKNavigationDelegate
-
-    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        // If this is the print webview finishing load, fire the print completion
-        if let completion = printCompletion {
-            printCompletion = nil
-            // Small delay for rendering to settle
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                completion()
-            }
-        }
-    }
-
     // MARK: - WKScriptMessageHandler
 
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
@@ -117,72 +104,18 @@ final class WebContentView: NSView, WKNavigationDelegate, WKScriptMessageHandler
         remainingChunks = []
     }
 
+    /// Print and PDF export both use window.print() — the only WKWebView
+    /// print path that actually works with loadHTMLString content.
+    /// Users can print or "Save as PDF" from the system print dialog.
     func printContent() {
-        preparePrintableWebView { printView in
-            let printInfo = NSPrintInfo.shared.copy() as! NSPrintInfo
-            printInfo.topMargin = 36
-            printInfo.bottomMargin = 36
-            printInfo.leftMargin = 36
-            printInfo.rightMargin = 36
-
-            let printOp = printView.printOperation(with: printInfo)
-            printOp.showsPrintPanel = true
-            printOp.showsProgressPanel = true
-            printOp.run()
-        }
+        webView.evaluateJavaScript("window.print()")
     }
 
     func exportPDF(filename: String) {
-        let panel = NSSavePanel()
-        panel.allowedContentTypes = [.pdf]
-        panel.nameFieldStringValue = filename.replacingOccurrences(of: ".md", with: ".pdf")
-            .replacingOccurrences(of: ".markdown", with: ".pdf")
-
-        panel.begin { [weak self] response in
-            guard response == .OK, let url = panel.url else { return }
-            self?.preparePrintableWebView { printView in
-                let printInfo = NSPrintInfo.shared.copy() as! NSPrintInfo
-                printInfo.topMargin = 36
-                printInfo.bottomMargin = 36
-                printInfo.leftMargin = 36
-                printInfo.rightMargin = 36
-                printInfo.jobDisposition = .save
-                printInfo.dictionary()[NSPrintInfo.AttributeKey.jobSavingURL] = url
-
-                let printOp = printView.printOperation(with: printInfo)
-                printOp.showsPrintPanel = false
-                printOp.showsProgressPanel = true
-                printOp.run()
-
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                    NSWorkspace.shared.activateFileViewerSelecting([url])
-                }
-            }
-        }
+        // window.print() is the only reliable path — it shows the system
+        // print dialog where users can choose "Save as PDF"
+        webView.evaluateJavaScript("window.print()")
     }
-
-    /// WKWebView's print renderer can't handle content loaded via loadHTMLString.
-    /// Workaround: get the full HTML, write to temp file, load in a fresh webview
-    /// via loadFileURL, then print from that webview.
-    private func preparePrintableWebView(completion: @escaping (WKWebView) -> Void) {
-        webView.evaluateJavaScript("document.documentElement.outerHTML") { [weak self] result, _ in
-            guard let html = result as? String else { return }
-
-            let tmpDir = FileManager.default.temporaryDirectory
-            let tmpFile = tmpDir.appendingPathComponent("mdviewer_print.html")
-            try? html.data(using: .utf8)?.write(to: tmpFile)
-
-            let printView = WKWebView(frame: self?.webView.frame ?? .zero)
-            printView.navigationDelegate = self
-
-            // Store completion to call when navigation finishes
-            self?.printCompletion = { completion(printView) }
-
-            printView.loadFileURL(tmpFile, allowingReadAccessTo: tmpDir)
-        }
-    }
-
-    private var printCompletion: (() -> Void)?
 
     /// Load mermaid.js only when the document has mermaid blocks.
     /// Cached after first load — subsequent documents reuse the parsed JS.
