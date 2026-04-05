@@ -51,16 +51,7 @@ body {
     transition: opacity 0.15s ease;
 }
 
-#content {
-    will-change: transform;
-    transform: translateZ(0);
-}
-
 @media print {
-    #content {
-        will-change: auto;
-        transform: none;
-    }
     .mermaid-placeholder {
         animation: none;
     }
@@ -240,7 +231,6 @@ img {
     margin: 1em 0;
     padding: 10px 0;
     animation: fadeIn 0.3s ease;
-    will-change: opacity;
 }
 
 @keyframes pulse {
