@@ -5,7 +5,7 @@ protocol WebContentViewDelegate: AnyObject {
     func webContentViewDidFinishFirstPaint(_ view: WebContentView)
 }
 
-final class WebContentView: NSView, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler {
+final class WebContentView: NSView, WKScriptMessageHandler {
     weak var delegate: WebContentViewDelegate?
 
     private let webView: WKWebView
@@ -30,8 +30,6 @@ final class WebContentView: NSView, WKNavigationDelegate, WKUIDelegate, WKScript
 
         contentController.add(self, name: "firstPaint")
 
-        webView.navigationDelegate = self
-        webView.uiDelegate = self
         webView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(webView)
 
@@ -57,21 +55,6 @@ final class WebContentView: NSView, WKNavigationDelegate, WKUIDelegate, WKScript
     func toggleMonospace() {
         isMonospace.toggle()
         webView.evaluateJavaScript("window.toggleMonospace()")
-    }
-
-    // MARK: - WKUIDelegate
-
-    func webView(_ webView: WKWebView, printFrame: Any) {
-        let printInfo = NSPrintInfo.shared.copy() as! NSPrintInfo
-        printInfo.topMargin = 36
-        printInfo.bottomMargin = 36
-        printInfo.leftMargin = 36
-        printInfo.rightMargin = 36
-
-        let printOp = webView.printOperation(with: printInfo)
-        printOp.showsPrintPanel = true
-        printOp.showsProgressPanel = true
-        printOp.run()
     }
 
     // MARK: - WKScriptMessageHandler
@@ -121,16 +104,17 @@ final class WebContentView: NSView, WKNavigationDelegate, WKUIDelegate, WKScript
     }
 
     /// Print and PDF export both use window.print() — the only WKWebView
-    /// print path that actually works with loadHTMLString content.
-    /// Users can print or "Save as PDF" from the system print dialog.
     func printContent() {
-        webView.evaluateJavaScript("window.print()")
-    }
+        let printInfo = NSPrintInfo.shared.copy() as! NSPrintInfo
+        printInfo.topMargin = 36
+        printInfo.bottomMargin = 36
+        printInfo.leftMargin = 36
+        printInfo.rightMargin = 36
 
-    func exportPDF(filename: String) {
-        // window.print() is the only reliable path — it shows the system
-        // print dialog where users can choose "Save as PDF"
-        webView.evaluateJavaScript("window.print()")
+        let printOp = webView.printOperation(with: printInfo)
+        printOp.showsPrintPanel = true
+        printOp.showsProgressPanel = true
+        printOp.run()
     }
 
     /// Load mermaid.js only when the document has mermaid blocks.
