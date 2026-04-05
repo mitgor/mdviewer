@@ -5,7 +5,7 @@ protocol WebContentViewDelegate: AnyObject {
     func webContentViewDidFinishFirstPaint(_ view: WebContentView)
 }
 
-final class WebContentView: NSView, WKNavigationDelegate, WKScriptMessageHandler {
+final class WebContentView: NSView, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler {
     weak var delegate: WebContentViewDelegate?
 
     private let webView: WKWebView
@@ -31,6 +31,7 @@ final class WebContentView: NSView, WKNavigationDelegate, WKScriptMessageHandler
         contentController.add(self, name: "firstPaint")
 
         webView.navigationDelegate = self
+        webView.uiDelegate = self
         webView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(webView)
 
@@ -56,6 +57,21 @@ final class WebContentView: NSView, WKNavigationDelegate, WKScriptMessageHandler
     func toggleMonospace() {
         isMonospace.toggle()
         webView.evaluateJavaScript("window.toggleMonospace()")
+    }
+
+    // MARK: - WKUIDelegate
+
+    func webView(_ webView: WKWebView, printFrame: Any) {
+        let printInfo = NSPrintInfo.shared.copy() as! NSPrintInfo
+        printInfo.topMargin = 36
+        printInfo.bottomMargin = 36
+        printInfo.leftMargin = 36
+        printInfo.rightMargin = 36
+
+        let printOp = webView.printOperation(with: printInfo)
+        printOp.showsPrintPanel = true
+        printOp.showsProgressPanel = true
+        printOp.run()
     }
 
     // MARK: - WKScriptMessageHandler
