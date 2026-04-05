@@ -52,9 +52,18 @@ body {
 }
 
 #content {
-    /* Promote to compositing layer for smooth scrolling */
     will-change: transform;
     transform: translateZ(0);
+}
+
+@media print {
+    #content {
+        will-change: auto;
+        transform: none;
+    }
+    .mermaid-placeholder {
+        animation: none;
+    }
 }
 
 body.monospace {
