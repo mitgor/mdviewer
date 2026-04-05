@@ -10,6 +10,14 @@ struct RenderResult {
 final class MarkdownRenderer {
     private let chunkThreshold = 50
 
+    // Cached regex patterns — compiled once, reused every render
+    private static let mermaidRegex = try! NSRegularExpression(
+        pattern: #"<pre><code class="language-mermaid">([\s\S]*?)</code></pre>"#
+    )
+    private static let blockTagRegex = try! NSRegularExpression(
+        pattern: #"<(?:p|h[1-6]|div|pre|blockquote|table|ul|ol|hr|li)[\s>]"#
+    )
+
     init() {
         cmark_gfm_core_extensions_ensure_registered()
     }
@@ -58,7 +66,6 @@ final class MarkdownRenderer {
         }
         defer { cmark_node_free(root) }
 
-        // Build extension list for HTML rendering
         var extList: UnsafeMutablePointer<cmark_llist>? = nil
         for ext in extensions {
             if let e = cmark_find_syntax_extension(ext) {
@@ -75,29 +82,20 @@ final class MarkdownRenderer {
     }
 
     private func processMermaidBlocks(_ html: String) -> String {
-        let pattern = #"<pre><code class="language-mermaid">([\s\S]*?)</code></pre>"#
-        guard let regex = try? NSRegularExpression(pattern: pattern) else {
-            return html
-        }
+        let nsString = html as NSString
+        let matches = Self.mermaidRegex.matches(in: html, range: NSRange(location: 0, length: nsString.length))
+        guard !matches.isEmpty else { return html }
 
         var result = html
-        let nsString = result as NSString
-        let matches = regex.matches(in: result, range: NSRange(location: 0, length: nsString.length))
-
         for match in matches.reversed() {
             let fullRange = match.range
             let codeRange = match.range(at: 1)
             let mermaidSource = nsString.substring(with: codeRange)
                 .trimmingCharacters(in: .whitespacesAndNewlines)
 
-            let encoded = mermaidSource
-                .replacingOccurrences(of: "&amp;", with: "&")
-                .replacingOccurrences(of: "&lt;", with: "<")
-                .replacingOccurrences(of: "&gt;", with: ">")
-                .replacingOccurrences(of: "&", with: "&amp;")
-                .replacingOccurrences(of: "\"", with: "&quot;")
-                .replacingOccurrences(of: "<", with: "&lt;")
-                .replacingOccurrences(of: ">", with: "&gt;")
+            // Single-pass: decode HTML entities from cmark, then re-encode for attribute
+            let decoded = decodeHTMLEntities(mermaidSource)
+            let encoded = encodeHTMLEntities(decoded)
 
             let placeholder = """
             <div class="mermaid-placeholder" data-mermaid-source="\(encoded)">
@@ -111,14 +109,36 @@ final class MarkdownRenderer {
         return result
     }
 
-    private func chunkHTML(_ html: String) -> [String] {
-        let blockTags = #"<(?:p|h[1-6]|div|pre|blockquote|table|ul|ol|hr|li)[\s>]"#
-        guard let regex = try? NSRegularExpression(pattern: blockTags) else {
-            return [html]
-        }
+    /// Single-pass HTML entity decoding (cmark output → raw text)
+    private func decodeHTMLEntities(_ input: String) -> String {
+        var result = input
+        // Order matters: decode &amp; last to avoid double-decoding
+        result = result.replacingOccurrences(of: "&lt;", with: "<")
+        result = result.replacingOccurrences(of: "&gt;", with: ">")
+        result = result.replacingOccurrences(of: "&quot;", with: "\"")
+        result = result.replacingOccurrences(of: "&amp;", with: "&")
+        return result
+    }
 
+    /// Single-pass HTML entity encoding (raw text → safe attribute value)
+    private func encodeHTMLEntities(_ input: String) -> String {
+        var result = ""
+        result.reserveCapacity(input.count + input.count / 8)
+        for char in input {
+            switch char {
+            case "&":  result += "&amp;"
+            case "\"": result += "&quot;"
+            case "<":  result += "&lt;"
+            case ">":  result += "&gt;"
+            default:   result.append(char)
+            }
+        }
+        return result
+    }
+
+    private func chunkHTML(_ html: String) -> [String] {
         let nsString = html as NSString
-        let matches = regex.matches(in: html, range: NSRange(location: 0, length: nsString.length))
+        let matches = Self.blockTagRegex.matches(in: html, range: NSRange(location: 0, length: nsString.length))
 
         if matches.count <= chunkThreshold {
             return [html]

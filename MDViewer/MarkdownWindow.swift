@@ -30,10 +30,8 @@ final class MarkdownWindow: NSWindow {
         self.minSize = NSSize(width: 400, height: 300)
         self.setFrameAutosaveName(Self.frameSaveKey)
 
-        // Start invisible — shown after first paint
         self.alphaValue = 0
 
-        // Enable 120fps on ProMotion displays
         configureHighRefreshRate()
     }
 
@@ -63,35 +61,10 @@ final class MarkdownWindow: NSWindow {
     }
 
     private func configureHighRefreshRate() {
-        // Enable layer-backing for the content view to unlock ProMotion
         contentView?.wantsLayer = true
 
         if let layer = contentView?.layer {
             layer.contentsScale = self.backingScaleFactor
         }
-
-        // Request maximum display refresh rate (120Hz on ProMotion)
-        if #available(macOS 14.0, *) {
-            setupDisplayLink()
-        }
-    }
-
-    @available(macOS 14.0, *)
-    private func setupDisplayLink() {
-        let highRange = CAFrameRateRange(minimum: 80, maximum: 120, preferred: 120)
-        let link = displayLink(target: self, selector: #selector(displayLinkFired(_:)))
-        link.preferredFrameRateRange = highRange
-        link.add(to: .main, forMode: .common)
-
-        // The display link's existence signals the compositor to use high refresh rate.
-        // Invalidate after the window is fully set up.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-            link.invalidate()
-        }
-    }
-
-    @available(macOS 14.0, *)
-    @objc private func displayLinkFired(_ link: CADisplayLink) {
-        // No-op — presence of the display link drives ProMotion refresh rate
     }
 }

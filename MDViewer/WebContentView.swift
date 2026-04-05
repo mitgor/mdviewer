@@ -64,19 +64,37 @@ final class WebContentView: NSView, WKNavigationDelegate, WKScriptMessageHandler
 
     // MARK: - Private
 
+    /// Batch all remaining chunks into a single JS call instead of N separate bridge crossings.
     private func injectRemainingChunks() {
         guard !remainingChunks.isEmpty else { return }
 
+        // Single-pass escape all chunks, then send one JS call
+        var jsChunks = "["
         for (index, chunk) in remainingChunks.enumerated() {
-            let escaped = chunk
-                .replacingOccurrences(of: "\\", with: "\\\\")
-                .replacingOccurrences(of: "`", with: "\\`")
-                .replacingOccurrences(of: "$", with: "\\$")
-
-            let delay = index * 16
-            let js = "setTimeout(function(){ window.appendChunk(`\(escaped)`); }, \(delay));"
-            webView.evaluateJavaScript(js)
+            if index > 0 { jsChunks += "," }
+            jsChunks += "`"
+            for char in chunk {
+                switch char {
+                case "\\": jsChunks += "\\\\"
+                case "`":  jsChunks += "\\`"
+                case "$":  jsChunks += "\\$"
+                default:   jsChunks.append(char)
+                }
+            }
+            jsChunks += "`"
         }
+        jsChunks += "]"
+
+        let js = """
+        (function(){
+            var chunks = \(jsChunks);
+            chunks.forEach(function(chunk, i) {
+                setTimeout(function(){ window.appendChunk(chunk); }, i * 16);
+            });
+        })();
+        """
+
+        webView.evaluateJavaScript(js)
         remainingChunks = []
     }
 
