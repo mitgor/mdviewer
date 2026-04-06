@@ -103,19 +103,30 @@ final class WebContentView: NSView, WKScriptMessageHandler {
         remainingChunks = []
     }
 
-    func printContent() {
-        // printOperation is broken on macOS 26 (produces blank pages).
-        // Use createPDF + paginate + open in Preview as workaround.
-        let tmpFile = FileManager.default.temporaryDirectory
-            .appendingPathComponent("MDViewer_print.pdf")
-        exportPaginatedPDF(to: tmpFile) { success in
-            if success {
-                NSWorkspace.shared.open(tmpFile)
-            }
+    private var documentTitle: String = ""
+
+    func printContent(title: String) {
+        self.documentTitle = title
+        // printOperation on WKWebView is broken on macOS 26.
+        // Workaround: createPDF → paginate → print via custom NSView.
+        generatePaginatedPDF { pdfData in
+            guard let data = pdfData else { return }
+            let printView = PDFPrintView(pdfData: data, title: title)
+            let printInfo = NSPrintInfo.shared.copy() as! NSPrintInfo
+            printInfo.topMargin = 0
+            printInfo.bottomMargin = 0
+            printInfo.leftMargin = 0
+            printInfo.rightMargin = 0
+
+            let printOp = NSPrintOperation(view: printView, printInfo: printInfo)
+            printOp.showsPrintPanel = true
+            printOp.showsProgressPanel = true
+            printOp.run()
         }
     }
 
     func exportPDF(filename: String) {
+        self.documentTitle = filename
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.pdf]
         panel.nameFieldStringValue = filename
@@ -124,32 +135,40 @@ final class WebContentView: NSView, WKScriptMessageHandler {
 
         panel.begin { [weak self] response in
             guard response == .OK, let url = panel.url else { return }
-            self?.exportPaginatedPDF(to: url) { success in
-                if success {
-                    NSWorkspace.shared.activateFileViewerSelecting([url])
-                }
+            self?.generatePaginatedPDF { pdfData in
+                guard let data = pdfData else { return }
+
+                // Use PDFPrintView to render with headers/footers
+                let printView = PDFPrintView(pdfData: data, title: filename)
+                let printInfo = NSPrintInfo.shared.copy() as! NSPrintInfo
+                printInfo.topMargin = 0
+                printInfo.bottomMargin = 0
+                printInfo.leftMargin = 0
+                printInfo.rightMargin = 0
+                printInfo.jobDisposition = .save
+                printInfo.dictionary()[NSPrintInfo.AttributeKey.jobSavingURL] = url
+
+                let printOp = NSPrintOperation(view: printView, printInfo: printInfo)
+                printOp.showsPrintPanel = false
+                printOp.showsProgressPanel = true
+                printOp.run()
+
+                NSWorkspace.shared.activateFileViewerSelecting([url])
             }
         }
     }
 
-    /// createPDF produces one tall continuous page. This slices it into
-    /// properly paginated pages using Core Graphics.
-    private func exportPaginatedPDF(to url: URL, completion: @escaping (Bool) -> Void) {
+    /// Generate paginated PDF from webview content via createPDF + CG slicing.
+    private func generatePaginatedPDF(completion: @escaping (Data?) -> Void) {
         webView.createPDF(configuration: WKPDFConfiguration()) { result in
             DispatchQueue.main.async {
                 switch result {
                 case .success(let data):
                     let paginated = Self.paginatePDF(data: data)
-                    do {
-                        try paginated.write(to: url)
-                        completion(true)
-                    } catch {
-                        Self.showError("Could not save PDF: \(error.localizedDescription)")
-                        completion(false)
-                    }
+                    completion(paginated)
                 case .failure(let error):
                     Self.showError("PDF generation failed: \(error.localizedDescription)")
-                    completion(false)
+                    completion(nil)
                 }
             }
         }
@@ -160,19 +179,19 @@ final class WebContentView: NSView, WKScriptMessageHandler {
         guard let provider = CGDataProvider(data: data as CFData),
               let sourcePDF = CGPDFDocument(provider),
               let sourcePage = sourcePDF.page(at: 1) else {
-            return data // Fallback to original
+            return data
         }
 
         let sourceRect = sourcePage.getBoxRect(.mediaBox)
         let pageWidth = sourceRect.width
         let sourceHeight = sourceRect.height
 
-        // A4: 595.28 x 841.89 points. Use source width, calculate height proportionally.
+        // A4 proportions applied to source width
         let pageHeight: CGFloat = 841.89 * (pageWidth / 595.28)
         let pageCount = Int(ceil(sourceHeight / pageHeight))
 
         if pageCount <= 1 {
-            return data // Already fits on one page
+            return data
         }
 
         let pdfData = NSMutableData()
@@ -185,9 +204,6 @@ final class WebContentView: NSView, WKScriptMessageHandler {
             var mediaBox = CGRect(x: 0, y: 0, width: pageWidth, height: pageHeight)
             context.beginPage(mediaBox: &mediaBox)
 
-            // The source PDF has origin at bottom-left.
-            // For page i, we want to show the slice starting at y offset from the top.
-            // Source top = sourceHeight, so page 0 shows [sourceHeight - pageHeight, sourceHeight]
             let yOffset = sourceHeight - CGFloat(i + 1) * pageHeight
             context.translateBy(x: 0, y: -yOffset)
             context.drawPDFPage(sourcePage)

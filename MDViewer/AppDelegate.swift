@@ -71,7 +71,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
 
     @objc func printDocument(_ sender: Any?) {
         guard let window = NSApp.keyWindow as? MarkdownWindow else { return }
-        window.contentViewWrapper.printContent()
+        window.contentViewWrapper.printContent(title: window.title)
     }
 
     @objc func exportPDF(_ sender: Any?) {
