@@ -103,18 +103,63 @@ final class WebContentView: NSView, WKScriptMessageHandler {
         remainingChunks = []
     }
 
-    /// Print and PDF export both use window.print() — the only WKWebView
     func printContent() {
-        let printInfo = NSPrintInfo.shared.copy() as! NSPrintInfo
-        printInfo.topMargin = 36
-        printInfo.bottomMargin = 36
-        printInfo.leftMargin = 36
-        printInfo.rightMargin = 36
+        // printOperation is broken on macOS 26 (produces blank pages).
+        // Use createPDF + open in Preview as workaround.
+        let tmpFile = FileManager.default.temporaryDirectory
+            .appendingPathComponent("MDViewer_print.pdf")
+        exportPDF(to: tmpFile) { success in
+            if success {
+                NSWorkspace.shared.open(tmpFile)
+            }
+        }
+    }
 
-        let printOp = webView.printOperation(with: printInfo)
-        printOp.showsPrintPanel = true
-        printOp.showsProgressPanel = true
-        printOp.run()
+    func exportPDF(filename: String) {
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.pdf]
+        panel.nameFieldStringValue = filename
+            .replacingOccurrences(of: ".md", with: ".pdf")
+            .replacingOccurrences(of: ".markdown", with: ".pdf")
+
+        panel.begin { [weak self] response in
+            guard response == .OK, let url = panel.url else { return }
+            self?.exportPDF(to: url) { success in
+                if success {
+                    NSWorkspace.shared.activateFileViewerSelecting([url])
+                }
+            }
+        }
+    }
+
+    private func exportPDF(to url: URL, completion: @escaping (Bool) -> Void) {
+        // createPDF captures the full scrollable content as a single page.
+        // This is the correct behavior for a document viewer — continuous PDF.
+        webView.createPDF(configuration: WKPDFConfiguration()) { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let data):
+                    do {
+                        try data.write(to: url)
+                        completion(true)
+                    } catch {
+                        Self.showError("Could not save PDF: \(error.localizedDescription)")
+                        completion(false)
+                    }
+                case .failure(let error):
+                    Self.showError("PDF generation failed: \(error.localizedDescription)")
+                    completion(false)
+                }
+            }
+        }
+    }
+
+    private static func showError(_ message: String) {
+        let alert = NSAlert()
+        alert.messageText = "PDF Export Failed"
+        alert.informativeText = message
+        alert.alertStyle = .warning
+        alert.runModal()
     }
 
     /// Load mermaid.js only when the document has mermaid blocks.
