@@ -21,7 +21,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-06)
 
 **Core value:** Open a markdown file and see beautifully rendered content instantly
-**Current focus:** Phase 01 — correctness-measurement-baseline
+**Current focus:** Phase 02 — large-file-memory-&-progressive-rendering
 
 ## Current Position
 
@@ -75,6 +75,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-06T08:34:00Z
-Stopped at: Completed 01-01-PLAN.md (retain cycle fix and OSSignposter instrumentation)
+Last session: 2026-04-06
+Stopped at: Phase 01 complete, ready to plan Phase 02
 Resume file: None
