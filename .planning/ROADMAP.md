@@ -58,7 +58,7 @@ Plans:
 **Plans**: 2 plans
 Plans:
 - [x] 03-01-PLAN.md — Add launch-to-paint signpost for end-to-end launch measurement
-- [ ] 03-02-PLAN.md — Profile launch path, resolve WKWebView pre-warm decision, record timing data
+- [x] 03-02-PLAN.md — Profile launch path, resolve WKWebView pre-warm decision, record timing data
 
 ### Phase 4: Mermaid Script Loading
 **Goal**: Mermaid diagrams render without a 3MB IPC bridge call per window
