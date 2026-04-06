@@ -6,12 +6,37 @@ protocol WebContentViewDelegate: AnyObject {
 }
 
 final class WebContentView: NSView, WKScriptMessageHandler {
+
+    // MARK: - WeakScriptMessageProxy
+
+    /// Breaks the WKUserContentController -> WebContentView retain cycle.
+    /// WKUserContentController holds a strong reference to its message handlers;
+    /// this proxy holds a weak reference back to the real handler.
+    private class WeakScriptMessageProxy: NSObject, WKScriptMessageHandler {
+        weak var delegate: WKScriptMessageHandler?
+
+        init(delegate: WKScriptMessageHandler) {
+            self.delegate = delegate
+            super.init()
+        }
+
+        func userContentController(
+            _ userContentController: WKUserContentController,
+            didReceive message: WKScriptMessage
+        ) {
+            delegate?.userContentController(userContentController, didReceive: message)
+        }
+    }
+
+    // MARK: - Properties
+
     weak var delegate: WebContentViewDelegate?
 
     private let webView: WKWebView
     private var remainingChunks: [String] = []
     private var hasMermaid = false
     private var isMonospace = false
+    private var hasProcessedFirstPaint = false
 
     /// Mermaid JS source, loaded lazily from bundle on first use
     private static var mermaidJS: String?
@@ -19,7 +44,9 @@ final class WebContentView: NSView, WKScriptMessageHandler {
 
     override init(frame: NSRect) {
         let config = WKWebViewConfiguration()
+        #if DEBUG
         config.preferences.setValue(true, forKey: "developerExtrasEnabled")
+        #endif
 
         let contentController = WKUserContentController()
         config.userContentController = contentController
@@ -28,7 +55,7 @@ final class WebContentView: NSView, WKScriptMessageHandler {
 
         super.init(frame: frame)
 
-        contentController.add(self, name: "firstPaint")
+        contentController.add(WeakScriptMessageProxy(delegate: self), name: "firstPaint")
 
         webView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(webView)
@@ -60,13 +87,21 @@ final class WebContentView: NSView, WKScriptMessageHandler {
     // MARK: - WKScriptMessageHandler
 
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        if message.name == "firstPaint" {
+        if message.name == "firstPaint", !hasProcessedFirstPaint {
+            hasProcessedFirstPaint = true
             delegate?.webContentViewDidFinishFirstPaint(self)
             injectRemainingChunks()
             if hasMermaid {
                 loadAndInitMermaid()
             }
         }
+    }
+
+    deinit {
+        webView.configuration.userContentController.removeScriptMessageHandler(forName: "firstPaint")
+        #if DEBUG
+        print("[WebContentView] deinit - \(ObjectIdentifier(self))")
+        #endif
     }
 
     // MARK: - Private

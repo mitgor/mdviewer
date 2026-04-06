@@ -35,6 +35,12 @@ final class MarkdownWindow: NSWindow {
         configureHighRefreshRate()
     }
 
+    deinit {
+        #if DEBUG
+        print("[MarkdownWindow] deinit - \(ObjectIdentifier(self))")
+        #endif
+    }
+
     func showWithFadeIn() {
         makeKeyAndOrderFront(nil)
         NSAnimationContext.runAnimationGroup { context in
