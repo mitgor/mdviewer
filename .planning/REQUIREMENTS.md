@@ -7,7 +7,7 @@
 
 ### Memory Correctness
 
-- [ ] **MEM-01**: WKUserContentController retain cycle fixed — closing a window releases all WKWebView memory
+- [x] **MEM-01**: WKUserContentController retain cycle fixed — closing a window releases all WKWebView memory
 - [ ] **MEM-02**: File reading uses `Data(contentsOf:options:.mappedIfSafe)` — 10MB+ files don't spike heap
 - [ ] **MEM-03**: Mermaid.js loaded via `<script src>` in template, not 3MB `evaluateJavaScript` bridge call
 
@@ -18,7 +18,7 @@
 
 ### Launch Speed
 
-- [ ] **LAUNCH-01**: `os_signpost` instrumentation added to measure each pipeline phase
+- [x] **LAUNCH-01**: `os_signpost` instrumentation added to measure each pipeline phase
 - [ ] **LAUNCH-02**: WKWebView pre-warmed at app launch — reused for first file open
 - [ ] **LAUNCH-03**: Sub-100ms warm launch to first visible content on Apple Silicon
 
@@ -46,12 +46,12 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| MEM-01 | Phase 1 | Pending |
+| MEM-01 | Phase 1 | Complete |
 | MEM-02 | Phase 2 | Pending |
 | MEM-03 | Phase 4 | Pending |
 | RENDER-01 | Phase 2 | Pending |
 | RENDER-02 | Phase 2 | Pending |
-| LAUNCH-01 | Phase 1 | Pending |
+| LAUNCH-01 | Phase 1 | Complete |
 | LAUNCH-02 | Phase 3 | Pending |
 | LAUNCH-03 | Phase 3 | Pending |
 | WIN-01 | Phase 5 | Pending |

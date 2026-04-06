@@ -1,3 +1,19 @@
+---
+gsd_state_version: 1.0
+milestone: v2.0
+milestone_name: milestone
+status: executing
+stopped_at: Completed 01-01-PLAN.md (retain cycle fix and OSSignposter instrumentation)
+last_updated: "2026-04-06T08:34:00Z"
+last_activity: 2026-04-06 -- Completed 01-01-PLAN.md
+progress:
+  total_phases: 5
+  completed_phases: 1
+  total_plans: 1
+  completed_plans: 1
+  percent: 20
+---
+
 # Project State
 
 ## Project Reference
@@ -5,33 +21,35 @@
 See: .planning/PROJECT.md (updated 2026-04-06)
 
 **Core value:** Open a markdown file and see beautifully rendered content instantly
-**Current focus:** Phase 1 - Correctness & Measurement Baseline
+**Current focus:** Phase 01 — correctness-measurement-baseline
 
 ## Current Position
 
-Phase: 1 of 5 (Correctness & Measurement Baseline)
-Plan: 0 of 0 in current phase
-Status: Ready to plan
-Last activity: 2026-04-03 — Roadmap created
+Phase: 01 (correctness-measurement-baseline) — COMPLETE
+Plan: 1 of 1 (complete)
+Status: Phase 01 complete
+Last activity: 2026-04-06 -- Completed 01-01-PLAN.md
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [██░░░░░░░░] 20%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0
-- Average duration: -
-- Total execution time: 0 hours
+
+- Total plans completed: 1
+- Average duration: 4 min
+- Total execution time: 0.1 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 01-correctness-measurement-baseline | 1 | 4 min | 4 min |
 
 **Recent Trend:**
-- Last 5 plans: -
-- Trend: -
+
+- Last 5 plans: 01-01 (4 min)
+- Trend: First plan completed
 
 *Updated after each plan completion*
 
@@ -42,7 +60,9 @@ Progress: [░░░░░░░░░░] 0%
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- None yet
+- Module-level renderingSignposter constant (MarkdownRenderer is stateless, instance property would be wrong)
+- File-level appSignposter in AppDelegate for open-to-paint interval
+- ObjectIdentifier-keyed dictionary for in-flight paint states (supports concurrent window opens)
 
 ### Pending Todos
 
@@ -55,6 +75,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-03
-Stopped at: Roadmap created, ready to plan Phase 1
+Last session: 2026-04-06T08:34:00Z
+Stopped at: Completed 01-01-PLAN.md (retain cycle fix and OSSignposter instrumentation)
 Resume file: None
