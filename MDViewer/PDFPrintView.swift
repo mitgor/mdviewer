@@ -6,18 +6,22 @@ final class PDFPrintView: NSView {
     private let pdfDocument: CGPDFDocument
     private let pageCount: Int
     private let documentTitle: String
+    private let pageSize: NSSize
 
     private let headerHeight: CGFloat = 30
     private let footerHeight: CGFloat = 30
     private let margin: CGFloat = 36
 
-    init(pdfData: Data, title: String) {
+    init(pdfData: Data, title: String, paperSize: NSSize? = nil) {
         let provider = CGDataProvider(data: pdfData as CFData)!
         self.pdfDocument = CGPDFDocument(provider)!
         self.pageCount = pdfDocument.numberOfPages
         self.documentTitle = title
+        self.pageSize = paperSize ?? NSSize(width: 595.28, height: 841.89) // A4 default
 
-        super.init(frame: .zero)
+        // Frame must span all pages vertically for NSPrintOperation
+        let totalHeight = CGFloat(self.pageCount) * self.pageSize.height
+        super.init(frame: NSRect(x: 0, y: 0, width: self.pageSize.width, height: totalHeight))
     }
 
     required init?(coder: NSCoder) {
@@ -32,11 +36,8 @@ final class PDFPrintView: NSView {
     }
 
     override func rectForPage(_ page: Int) -> NSRect {
-        guard let printInfo = NSPrintOperation.current?.printInfo else {
-            return .zero
-        }
-        let paperSize = printInfo.paperSize
-        return NSRect(x: 0, y: 0, width: paperSize.width, height: paperSize.height)
+        let y = CGFloat(page - 1) * pageSize.height
+        return NSRect(x: 0, y: y, width: pageSize.width, height: pageSize.height)
     }
 
     override func draw(_ dirtyRect: NSRect) {
@@ -47,13 +48,17 @@ final class PDFPrintView: NSView {
         guard page >= 1, page <= pageCount,
               let pdfPage = pdfDocument.page(at: page) else { return }
 
-        let printInfo = printOp.printInfo
-        let paperSize = printInfo.paperSize
+        // Page origin in view coordinates
+        let pageOriginY = CGFloat(page - 1) * pageSize.height
 
         let contentX = margin
-        let contentY = footerHeight + margin
-        let contentWidth = paperSize.width - 2 * margin
-        let contentHeight = paperSize.height - headerHeight - footerHeight - 2 * margin
+        let contentY = pageOriginY + footerHeight + margin
+        let contentWidth = pageSize.width - 2 * margin
+        let contentHeight = pageSize.height - headerHeight - footerHeight - 2 * margin
+
+        // Draw white background
+        context.setFillColor(NSColor.white.cgColor)
+        context.fill(NSRect(x: 0, y: pageOriginY, width: pageSize.width, height: pageSize.height))
 
         // Draw PDF page content scaled to fit
         let sourceRect = pdfPage.getBoxRect(.mediaBox)
@@ -62,10 +67,12 @@ final class PDFPrintView: NSView {
         let scale = min(scaleX, scaleY)
 
         let scaledWidth = sourceRect.width * scale
+        let scaledHeight = sourceRect.height * scale
         let offsetX = contentX + (contentWidth - scaledWidth) / 2
+        let offsetY = contentY + (contentHeight - scaledHeight) / 2
 
         context.saveGState()
-        context.translateBy(x: offsetX, y: contentY)
+        context.translateBy(x: offsetX, y: offsetY)
         context.scaleBy(x: scale, y: scale)
         context.drawPDFPage(pdfPage)
         context.restoreGState()
@@ -77,7 +84,7 @@ final class PDFPrintView: NSView {
         ]
         let headerStr = documentTitle as NSString
         let headerSize = headerStr.size(withAttributes: headerAttrs)
-        let headerY = paperSize.height - margin - headerSize.height
+        let headerY = pageOriginY + pageSize.height - margin - headerSize.height
         headerStr.draw(at: NSPoint(x: margin, y: headerY), withAttributes: headerAttrs)
 
         // Header rule line
@@ -85,30 +92,29 @@ final class PDFPrintView: NSView {
         context.setStrokeColor(NSColor.separatorColor.cgColor)
         context.setLineWidth(0.5)
         context.move(to: CGPoint(x: margin, y: ruleY))
-        context.addLine(to: CGPoint(x: paperSize.width - margin, y: ruleY))
+        context.addLine(to: CGPoint(x: pageSize.width - margin, y: ruleY))
         context.strokePath()
 
         // Draw footer
-        let footerAttrs = headerAttrs
         let pageStr = "Page \(page) of \(pageCount)" as NSString
-        let pageSize = pageStr.size(withAttributes: footerAttrs)
-        let footerY = margin
+        let pageStrSize = pageStr.size(withAttributes: headerAttrs)
+        let footerY = pageOriginY + margin
 
         // Footer rule line
-        let footerRuleY = footerY + pageSize.height + 4
+        let footerRuleY = footerY + pageStrSize.height + 4
         context.setStrokeColor(NSColor.separatorColor.cgColor)
         context.move(to: CGPoint(x: margin, y: footerRuleY))
-        context.addLine(to: CGPoint(x: paperSize.width - margin, y: footerRuleY))
+        context.addLine(to: CGPoint(x: pageSize.width - margin, y: footerRuleY))
         context.strokePath()
 
         // Page number — right aligned
         pageStr.draw(
-            at: NSPoint(x: paperSize.width - margin - pageSize.width, y: footerY),
-            withAttributes: footerAttrs
+            at: NSPoint(x: pageSize.width - margin - pageStrSize.width, y: footerY),
+            withAttributes: headerAttrs
         )
 
         // Document title in footer — left aligned
         let footerTitle = documentTitle as NSString
-        footerTitle.draw(at: NSPoint(x: margin, y: footerY), withAttributes: footerAttrs)
+        footerTitle.draw(at: NSPoint(x: margin, y: footerY), withAttributes: headerAttrs)
     }
 }

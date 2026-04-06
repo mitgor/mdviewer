@@ -111,13 +111,13 @@ final class WebContentView: NSView, WKScriptMessageHandler {
         // Workaround: createPDF → paginate → print via custom NSView.
         generatePaginatedPDF { pdfData in
             guard let data = pdfData else { return }
-            let printView = PDFPrintView(pdfData: data, title: title)
             let printInfo = NSPrintInfo.shared.copy() as! NSPrintInfo
             printInfo.topMargin = 0
             printInfo.bottomMargin = 0
             printInfo.leftMargin = 0
             printInfo.rightMargin = 0
 
+            let printView = PDFPrintView(pdfData: data, title: title, paperSize: printInfo.paperSize)
             let printOp = NSPrintOperation(view: printView, printInfo: printInfo)
             printOp.showsPrintPanel = true
             printOp.showsProgressPanel = true
@@ -138,8 +138,6 @@ final class WebContentView: NSView, WKScriptMessageHandler {
             self?.generatePaginatedPDF { pdfData in
                 guard let data = pdfData else { return }
 
-                // Use PDFPrintView to render with headers/footers
-                let printView = PDFPrintView(pdfData: data, title: filename)
                 let printInfo = NSPrintInfo.shared.copy() as! NSPrintInfo
                 printInfo.topMargin = 0
                 printInfo.bottomMargin = 0
@@ -148,6 +146,7 @@ final class WebContentView: NSView, WKScriptMessageHandler {
                 printInfo.jobDisposition = .save
                 printInfo.dictionary()[NSPrintInfo.AttributeKey.jobSavingURL] = url
 
+                let printView = PDFPrintView(pdfData: data, title: filename, paperSize: printInfo.paperSize)
                 let printOp = NSPrintOperation(view: printView, printInfo: printInfo)
                 printOp.showsPrintPanel = false
                 printOp.showsProgressPanel = true
