@@ -44,7 +44,7 @@ Plans:
   4. First screen of content appears before remaining chunks finish loading
 **Plans**: 2 plans
 Plans:
-- [ ] 02-01-PLAN.md — Memory-mapped file read and byte-size N-chunk splitting
+- [x] 02-01-PLAN.md — Memory-mapped file read and byte-size N-chunk splitting
 - [ ] 02-02-PLAN.md — Replace evaluateJavaScript with callAsyncJavaScript for typed chunk injection
 
 ### Phase 3: Launch Speed

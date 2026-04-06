@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
-status: completed
-stopped_at: Phase 2 context gathered
-last_updated: "2026-04-06T08:45:32.178Z"
+status: executing
+stopped_at: Completed 02-01-PLAN.md
+last_updated: "2026-04-06T09:17:57.719Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 5
   completed_phases: 1
-  total_plans: 1
-  completed_plans: 1
+  total_plans: 3
+  completed_plans: 2
   percent: 20
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-06)
 
 **Core value:** Open a markdown file and see beautifully rendered content instantly
-**Current focus:** Phase 02 — large-file-memory-&-progressive-rendering
+**Current focus:** Phase 02 — large-file-memory-progressive-rendering
 
 ## Current Position
 
-Phase: 2
-Plan: Not started
-Status: Phase 01 complete
+Phase: 02 (large-file-memory-progressive-rendering) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-04-06
 
 Progress: [██░░░░░░░░] 20%
@@ -52,6 +52,7 @@ Progress: [██░░░░░░░░] 20%
 - Trend: First plan completed
 
 *Updated after each plan completion*
+| Phase 02 P01 | 15 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -63,6 +64,9 @@ Recent decisions affecting current work:
 - Module-level renderingSignposter constant (MarkdownRenderer is stateless, instance property would be wrong)
 - File-level appSignposter in AppDelegate for open-to-paint interval
 - ObjectIdentifier-keyed dictionary for in-flight paint states (supports concurrent window opens)
+- [Phase 02]: 64KB chunkByteLimit measured with .utf8.count -- correct metric for data transfer size
+- [Phase 02]: mappedIfSafe over alwaysMapped for graceful fallback on unsafe volumes
+- [Phase 02]: XCTest hosted fix via applicationShouldTerminateAfterLastWindowClosed returning false during tests
 
 ### Pending Todos
 
@@ -75,6 +79,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-06T08:45:32.175Z
-Stopped at: Phase 2 context gathered
-Resume file: .planning/phases/02-large-file-memory-progressive-rendering/02-CONTEXT.md
+Last session: 2026-04-06T09:17:57.717Z
+Stopped at: Completed 02-01-PLAN.md
+Resume file: None
