@@ -32,6 +32,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        // During test hosting, don't terminate when no windows are open.
+        if NSClassFromString("XCTestCase") != nil { return false }
         return true
     }
 
