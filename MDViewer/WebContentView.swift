@@ -39,10 +39,6 @@ final class WebContentView: NSView, WKScriptMessageHandler {
     private var isMonospace = false
     private var hasProcessedFirstPaint = false
 
-    /// Mermaid JS source, loaded lazily from bundle on first use
-    private static var mermaidJS: String?
-    private static var mermaidJSLoaded = false
-
     override init(frame: NSRect) {
         let config = WKWebViewConfiguration()
         #if DEBUG
@@ -203,21 +199,27 @@ final class WebContentView: NSView, WKScriptMessageHandler {
         }
     }
 
-    /// Load mermaid.js only when the document has mermaid blocks.
-    /// Cached after first load — subsequent documents reuse the parsed JS.
+    /// Load mermaid.min.js via script-src injection — WebKit loads directly from disk,
+    /// bypassing the multi-megabyte IPC bridge call that evaluateJavaScript would require.
     private func loadAndInitMermaid() {
-        if !Self.mermaidJSLoaded {
-            Self.mermaidJSLoaded = true
-            if let url = Bundle.main.url(forResource: "mermaid.min", withExtension: "js") {
-                Self.mermaidJS = try? String(contentsOf: url, encoding: .utf8)
-            }
-        }
-
-        guard let js = Self.mermaidJS else { return }
-
-        // Inject mermaid.js then initialize
-        webView.evaluateJavaScript(js) { [weak self] _, _ in
-            self?.webView.evaluateJavaScript("window.initMermaid()")
-        }
+        let js = """
+        (function() {
+            var s = document.createElement('script');
+            s.src = 'mermaid.min.js';
+            s.onload = function() { window.initMermaid(); };
+            s.onerror = function() {
+                var els = document.querySelectorAll('.mermaid-placeholder');
+                els.forEach(function(el) {
+                    var pre = document.createElement('pre');
+                    var code = document.createElement('code');
+                    code.textContent = el.getAttribute('data-mermaid-source') || 'Mermaid failed to load';
+                    pre.appendChild(code);
+                    el.replaceWith(pre);
+                });
+            };
+            document.head.appendChild(s);
+        })()
+        """
+        webView.evaluateJavaScript(js)
     }
 }
