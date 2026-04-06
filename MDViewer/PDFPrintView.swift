@@ -1,26 +1,47 @@
 import Cocoa
 
-/// Custom view for printing paginated PDF content with headers and footers.
-/// Used because WKWebView.printOperation is broken on macOS 26.
+/// Custom view for printing WKWebView content with headers and footers.
+/// Takes the raw tall PDF from createPDF and slices it into pages,
+/// accounting for header/footer/margin space in each page.
 final class PDFPrintView: NSView {
-    private let pdfDocument: CGPDFDocument
+    private let sourcePage: CGPDFPage
+    private let sourceRect: CGRect
     private let pageCount: Int
     private let documentTitle: String
     private let pageSize: NSSize
 
-    private let headerHeight: CGFloat = 30
-    private let footerHeight: CGFloat = 30
+    private let headerHeight: CGFloat = 24
+    private let footerHeight: CGFloat = 24
     private let margin: CGFloat = 36
 
-    init(pdfData: Data, title: String, paperSize: NSSize? = nil) {
-        let provider = CGDataProvider(data: pdfData as CFData)!
-        self.pdfDocument = CGPDFDocument(provider)!
-        self.pageCount = pdfDocument.numberOfPages
-        self.documentTitle = title
-        self.pageSize = paperSize ?? NSSize(width: 595.28, height: 841.89) // A4 default
+    /// How much source content height fits in one output page's content area
+    private let sourceHeightPerPage: CGFloat
 
-        // Frame must span all pages vertically for NSPrintOperation
-        let totalHeight = CGFloat(self.pageCount) * self.pageSize.height
+    init?(pdfData: Data, title: String, paperSize: NSSize? = nil) {
+        guard let provider = CGDataProvider(data: pdfData as CFData),
+              let doc = CGPDFDocument(provider),
+              let page = doc.page(at: 1) else {
+            return nil
+        }
+
+        self.sourcePage = page
+        self.sourceRect = page.getBoxRect(.mediaBox)
+        self.documentTitle = title
+        self.pageSize = paperSize ?? NSSize(width: 595.28, height: 841.89)
+
+        // Content area within each output page
+        let contentWidth = self.pageSize.width - 2 * margin
+        let contentHeight = self.pageSize.height - headerHeight - footerHeight - 2 * margin
+
+        // Scale factor to fit source width into content width
+        let scale = contentWidth / sourceRect.width
+
+        // How much source height fits per page (in source coordinates)
+        self.sourceHeightPerPage = contentHeight / scale
+
+        self.pageCount = max(1, Int(ceil(sourceRect.height / sourceHeightPerPage)))
+
+        let totalHeight = CGFloat(pageCount) * self.pageSize.height
         super.init(frame: NSRect(x: 0, y: 0, width: self.pageSize.width, height: totalHeight))
     }
 
@@ -45,76 +66,87 @@ final class PDFPrintView: NSView {
               let printOp = NSPrintOperation.current else { return }
 
         let page = printOp.currentPage
-        guard page >= 1, page <= pageCount,
-              let pdfPage = pdfDocument.page(at: page) else { return }
+        guard page >= 1, page <= pageCount else { return }
 
-        // Page origin in view coordinates
         let pageOriginY = CGFloat(page - 1) * pageSize.height
 
+        // White background
+        context.setFillColor(NSColor.white.cgColor)
+        context.fill(NSRect(x: 0, y: pageOriginY, width: pageSize.width, height: pageSize.height))
+
+        // Content area
         let contentX = margin
         let contentY = pageOriginY + footerHeight + margin
         let contentWidth = pageSize.width - 2 * margin
         let contentHeight = pageSize.height - headerHeight - footerHeight - 2 * margin
+        let scale = contentWidth / sourceRect.width
 
-        // Draw white background
-        context.setFillColor(NSColor.white.cgColor)
-        context.fill(NSRect(x: 0, y: pageOriginY, width: pageSize.width, height: pageSize.height))
-
-        // Draw PDF page content scaled to fit
-        let sourceRect = pdfPage.getBoxRect(.mediaBox)
-        let scaleX = contentWidth / sourceRect.width
-        let scaleY = contentHeight / sourceRect.height
-        let scale = min(scaleX, scaleY)
-
-        let scaledWidth = sourceRect.width * scale
-        let scaledHeight = sourceRect.height * scale
-        let offsetX = contentX + (contentWidth - scaledWidth) / 2
-        let offsetY = contentY + (contentHeight - scaledHeight) / 2
-
+        // Clip to content area — prevents bleed into header/footer
         context.saveGState()
-        context.translateBy(x: offsetX, y: offsetY)
+        context.clip(to: CGRect(x: contentX, y: contentY, width: contentWidth, height: contentHeight))
+
+        // Calculate which portion of the source to show for this page.
+        // Source page 1 shows the TOP of the content (highest Y in source coords).
+        let sourceYOffset = sourceRect.height - CGFloat(page) * sourceHeightPerPage
+
+        context.translateBy(x: contentX, y: contentY)
         context.scaleBy(x: scale, y: scale)
-        context.drawPDFPage(pdfPage)
+        context.translateBy(x: 0, y: -sourceYOffset)
+        context.drawPDFPage(sourcePage)
         context.restoreGState()
 
-        // Draw header
-        let headerAttrs: [NSAttributedString.Key: Any] = [
-            .font: NSFont.systemFont(ofSize: 9, weight: .regular),
+        // Draw header/footer
+        drawHeader(context: context, page: page, pageOriginY: pageOriginY)
+        drawFooter(context: context, page: page, pageOriginY: pageOriginY)
+    }
+
+    // MARK: - Header & Footer
+
+    private func drawHeader(context: CGContext, page: Int, pageOriginY: CGFloat) {
+        let attrs: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: 8.5, weight: .regular),
             .foregroundColor: NSColor.secondaryLabelColor
         ]
-        let headerStr = documentTitle as NSString
-        let headerSize = headerStr.size(withAttributes: headerAttrs)
-        let headerY = pageOriginY + pageSize.height - margin - headerSize.height
-        headerStr.draw(at: NSPoint(x: margin, y: headerY), withAttributes: headerAttrs)
+        let title = documentTitle as NSString
+        let titleSize = title.size(withAttributes: attrs)
+        let y = pageOriginY + pageSize.height - margin - titleSize.height
+        title.draw(at: NSPoint(x: margin, y: y), withAttributes: attrs)
 
-        // Header rule line
-        let ruleY = headerY - 4
+        // Rule line
+        let ruleY = y - 3
         context.setStrokeColor(NSColor.separatorColor.cgColor)
         context.setLineWidth(0.5)
         context.move(to: CGPoint(x: margin, y: ruleY))
         context.addLine(to: CGPoint(x: pageSize.width - margin, y: ruleY))
         context.strokePath()
+    }
 
-        // Draw footer
-        let pageStr = "Page \(page) of \(pageCount)" as NSString
-        let pageStrSize = pageStr.size(withAttributes: headerAttrs)
+    private func drawFooter(context: CGContext, page: Int, pageOriginY: CGFloat) {
+        let attrs: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: 8.5, weight: .regular),
+            .foregroundColor: NSColor.secondaryLabelColor
+        ]
+
         let footerY = pageOriginY + margin
 
-        // Footer rule line
-        let footerRuleY = footerY + pageStrSize.height + 4
-        context.setStrokeColor(NSColor.separatorColor.cgColor)
-        context.move(to: CGPoint(x: margin, y: footerRuleY))
-        context.addLine(to: CGPoint(x: pageSize.width - margin, y: footerRuleY))
-        context.strokePath()
-
-        // Page number — right aligned
+        // Page number — right
+        let pageStr = "Page \(page) of \(pageCount)" as NSString
+        let pageStrSize = pageStr.size(withAttributes: attrs)
         pageStr.draw(
             at: NSPoint(x: pageSize.width - margin - pageStrSize.width, y: footerY),
-            withAttributes: headerAttrs
+            withAttributes: attrs
         )
 
-        // Document title in footer — left aligned
-        let footerTitle = documentTitle as NSString
-        footerTitle.draw(at: NSPoint(x: margin, y: footerY), withAttributes: headerAttrs)
+        // Title — left
+        let title = documentTitle as NSString
+        title.draw(at: NSPoint(x: margin, y: footerY), withAttributes: attrs)
+
+        // Rule line above footer text
+        let ruleY = footerY + pageStrSize.height + 3
+        context.setStrokeColor(NSColor.separatorColor.cgColor)
+        context.setLineWidth(0.5)
+        context.move(to: CGPoint(x: margin, y: ruleY))
+        context.addLine(to: CGPoint(x: pageSize.width - margin, y: ruleY))
+        context.strokePath()
     }
 }

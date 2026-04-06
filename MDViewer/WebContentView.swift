@@ -106,18 +106,17 @@ final class WebContentView: NSView, WKScriptMessageHandler {
     private var documentTitle: String = ""
 
     func printContent(title: String) {
-        self.documentTitle = title
-        // printOperation on WKWebView is broken on macOS 26.
-        // Workaround: createPDF → paginate → print via custom NSView.
-        generatePaginatedPDF { pdfData in
-            guard let data = pdfData else { return }
+        // WKWebView.printOperation is broken on macOS 26.
+        // Workaround: createPDF → PDFPrintView → NSPrintOperation.
+        capturePDF { data in
+            guard let data = data else { return }
             let printInfo = NSPrintInfo.shared.copy() as! NSPrintInfo
             printInfo.topMargin = 0
             printInfo.bottomMargin = 0
             printInfo.leftMargin = 0
             printInfo.rightMargin = 0
 
-            let printView = PDFPrintView(pdfData: data, title: title, paperSize: printInfo.paperSize)
+            guard let printView = PDFPrintView(pdfData: data, title: title, paperSize: printInfo.paperSize) else { return }
             let printOp = NSPrintOperation(view: printView, printInfo: printInfo)
             printOp.showsPrintPanel = true
             printOp.showsProgressPanel = true
@@ -126,7 +125,6 @@ final class WebContentView: NSView, WKScriptMessageHandler {
     }
 
     func exportPDF(filename: String) {
-        self.documentTitle = filename
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.pdf]
         panel.nameFieldStringValue = filename
@@ -135,9 +133,8 @@ final class WebContentView: NSView, WKScriptMessageHandler {
 
         panel.begin { [weak self] response in
             guard response == .OK, let url = panel.url else { return }
-            self?.generatePaginatedPDF { pdfData in
-                guard let data = pdfData else { return }
-
+            self?.capturePDF { data in
+                guard let data = data else { return }
                 let printInfo = NSPrintInfo.shared.copy() as! NSPrintInfo
                 printInfo.topMargin = 0
                 printInfo.bottomMargin = 0
@@ -146,7 +143,7 @@ final class WebContentView: NSView, WKScriptMessageHandler {
                 printInfo.jobDisposition = .save
                 printInfo.dictionary()[NSPrintInfo.AttributeKey.jobSavingURL] = url
 
-                let printView = PDFPrintView(pdfData: data, title: filename, paperSize: printInfo.paperSize)
+                guard let printView = PDFPrintView(pdfData: data, title: filename, paperSize: printInfo.paperSize) else { return }
                 let printOp = NSPrintOperation(view: printView, printInfo: printInfo)
                 printOp.showsPrintPanel = false
                 printOp.showsProgressPanel = true
@@ -157,69 +154,22 @@ final class WebContentView: NSView, WKScriptMessageHandler {
         }
     }
 
-    /// Generate paginated PDF from webview content via createPDF + CG slicing.
-    private func generatePaginatedPDF(completion: @escaping (Data?) -> Void) {
+    private func capturePDF(completion: @escaping (Data?) -> Void) {
         webView.createPDF(configuration: WKPDFConfiguration()) { result in
             DispatchQueue.main.async {
                 switch result {
                 case .success(let data):
-                    let paginated = Self.paginatePDF(data: data)
-                    completion(paginated)
+                    completion(data)
                 case .failure(let error):
-                    Self.showError("PDF generation failed: \(error.localizedDescription)")
+                    let alert = NSAlert()
+                    alert.messageText = "PDF Export Failed"
+                    alert.informativeText = error.localizedDescription
+                    alert.alertStyle = .warning
+                    alert.runModal()
                     completion(nil)
                 }
             }
         }
-    }
-
-    /// Slice a tall single-page PDF into A4-sized pages.
-    private static func paginatePDF(data: Data) -> Data {
-        guard let provider = CGDataProvider(data: data as CFData),
-              let sourcePDF = CGPDFDocument(provider),
-              let sourcePage = sourcePDF.page(at: 1) else {
-            return data
-        }
-
-        let sourceRect = sourcePage.getBoxRect(.mediaBox)
-        let pageWidth = sourceRect.width
-        let sourceHeight = sourceRect.height
-
-        // A4 proportions applied to source width
-        let pageHeight: CGFloat = 841.89 * (pageWidth / 595.28)
-        let pageCount = Int(ceil(sourceHeight / pageHeight))
-
-        if pageCount <= 1 {
-            return data
-        }
-
-        let pdfData = NSMutableData()
-        guard let consumer = CGDataConsumer(data: pdfData),
-              let context = CGContext(consumer: consumer, mediaBox: nil, nil) else {
-            return data
-        }
-
-        for i in 0..<pageCount {
-            var mediaBox = CGRect(x: 0, y: 0, width: pageWidth, height: pageHeight)
-            context.beginPage(mediaBox: &mediaBox)
-
-            let yOffset = sourceHeight - CGFloat(i + 1) * pageHeight
-            context.translateBy(x: 0, y: -yOffset)
-            context.drawPDFPage(sourcePage)
-
-            context.endPage()
-        }
-
-        context.closePDF()
-        return pdfData as Data
-    }
-
-    private static func showError(_ message: String) {
-        let alert = NSAlert()
-        alert.messageText = "PDF Export Failed"
-        alert.informativeText = message
-        alert.alertStyle = .warning
-        alert.runModal()
     }
 
     /// Load mermaid.js only when the document has mermaid blocks.
