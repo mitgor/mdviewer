@@ -1,11 +1,18 @@
 import Cocoa
+import os
 import UniformTypeIdentifiers
+
+private let appSignposter = OSSignposter(
+    subsystem: "com.mdviewer.app",
+    category: "RenderingPipeline"
+)
 
 class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
     private let renderer = MarkdownRenderer()
     private var template: SplitTemplate?
     private var windows: [MarkdownWindow] = []
     private var openedViaDelegate = false
+    private var openToPaintStates: [ObjectIdentifier: OSSignpostIntervalState] = [:]
 
     // MARK: - App Lifecycle
 
@@ -82,6 +89,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
     // MARK: - WebContentViewDelegate
 
     func webContentViewDidFinishFirstPaint(_ view: WebContentView) {
+        if let paintState = openToPaintStates.removeValue(forKey: ObjectIdentifier(view)) {
+            appSignposter.endInterval("open-to-paint", paintState)
+        }
         if let window = windows.first(where: { $0.contentViewWrapper === view }) {
             window.showWithFadeIn()
         }
@@ -107,12 +117,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
 
     private func openFile(_ url: URL) {
         guard let tmpl = template else { return }
+        let paintState = appSignposter.beginInterval("open-to-paint")
 
         // Parse markdown on background thread — keeps UI responsive for large files
         let renderer = self.renderer
         DispatchQueue.global(qos: .userInitiated).async {
             guard let result = renderer.renderFullPage(fileURL: url, template: tmpl) else {
                 DispatchQueue.main.async {
+                    appSignposter.endInterval("open-to-paint", paintState)
                     let alert = NSAlert()
                     alert.messageText = "Cannot Open File"
                     alert.informativeText = "The file \(url.lastPathComponent) could not be read."
@@ -123,14 +135,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
             }
 
             DispatchQueue.main.async { [weak self] in
-                self?.displayResult(result, for: url)
+                self?.displayResult(result, for: url, paintState: paintState)
             }
         }
     }
 
-    private func displayResult(_ result: RenderResult, for url: URL) {
+    private func displayResult(_ result: RenderResult, for url: URL, paintState: OSSignpostIntervalState) {
         let contentView = WebContentView(frame: .zero)
         contentView.delegate = self
+        openToPaintStates[ObjectIdentifier(contentView)] = paintState
 
         let window = MarkdownWindow(fileURL: url, contentView: contentView)
         windows.append(window)

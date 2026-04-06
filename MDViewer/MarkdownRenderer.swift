@@ -1,4 +1,5 @@
 import Foundation
+import os
 import cmark_gfm
 import cmark_gfm_extensions
 
@@ -24,6 +25,11 @@ struct SplitTemplate {
         }
     }
 }
+
+let renderingSignposter = OSSignposter(
+    subsystem: "com.mdviewer.app",
+    category: "RenderingPipeline"
+)
 
 final class MarkdownRenderer {
     private let chunkThreshold = 50
@@ -55,10 +61,31 @@ final class MarkdownRenderer {
     }
 
     func renderFullPage(fileURL: URL, template: SplitTemplate) -> RenderResult? {
+        let spID = renderingSignposter.makeSignpostID()
+
+        // File read interval
+        let readState = renderingSignposter.beginInterval("file-read", id: spID)
         guard let markdown = try? String(contentsOf: fileURL, encoding: .utf8) else {
+            renderingSignposter.endInterval("file-read", readState)
             return nil
         }
-        return renderFullPage(markdown: markdown, template: template)
+        renderingSignposter.endInterval("file-read", readState)
+
+        // Parse interval
+        let parseState = renderingSignposter.beginInterval("parse", id: spID)
+        let html = parseMarkdownToHTML(markdown)
+        renderingSignposter.endInterval("parse", parseState)
+
+        // Chunk-split interval
+        let chunkState = renderingSignposter.beginInterval("chunk-split", id: spID)
+        let (processed, hasMermaid) = processMermaidBlocks(html)
+        let chunks = chunkHTML(processed)
+        renderingSignposter.endInterval("chunk-split", chunkState)
+
+        let firstChunk = chunks.first ?? ""
+        let remaining = Array(chunks.dropFirst())
+        let page = template.prefix + firstChunk + template.suffix
+        return RenderResult(page: page, remainingChunks: remaining, hasMermaid: hasMermaid)
     }
 
     // MARK: - Private

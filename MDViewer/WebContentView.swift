@@ -1,4 +1,5 @@
 import Cocoa
+import os
 import WebKit
 
 protocol WebContentViewDelegate: AnyObject {
@@ -109,6 +110,8 @@ final class WebContentView: NSView, WKScriptMessageHandler {
     private func injectRemainingChunks() {
         guard !remainingChunks.isEmpty else { return }
 
+        let chunkInjectState = renderingSignposter.beginInterval("chunk-inject")
+
         var jsChunks = "["
         for (index, chunk) in remainingChunks.enumerated() {
             if index > 0 { jsChunks += "," }
@@ -136,6 +139,7 @@ final class WebContentView: NSView, WKScriptMessageHandler {
 
         webView.evaluateJavaScript(js)
         remainingChunks = []
+        renderingSignposter.endInterval("chunk-inject", chunkInjectState)
     }
 
     private var documentTitle: String = ""
