@@ -81,7 +81,9 @@ Plans:
   1. User moves a window, quits, relaunches with the same file — window appears at the saved position
   2. Opening three files simultaneously produces three visible, cascaded windows (not stacked at identical coordinates)
   3. Window position persistence does not conflict across different files
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 05-01-PLAN.md — Per-file window position persistence and multi-window cascading
 
 ## Progress
 
@@ -95,4 +97,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 2. Large File Memory & Progressive Rendering | 0/2 | Not started | - |
 | 3. Launch Speed | 0/3 | Not started | - |
 | 4. Mermaid Script Loading | 0/1 | Not started | - |
-| 5. Window Management | 0/0 | Not started | - |
+| 5. Window Management | 0/1 | Not started | - |
