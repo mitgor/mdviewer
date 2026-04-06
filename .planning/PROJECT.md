@@ -30,7 +30,7 @@ Open a markdown file and see beautifully rendered content instantly — sub-200m
 
 ### Active
 
-- [ ] Sub-100ms launch to first visible content
+- [ ] Sub-100ms launch to first visible content — deferred to future milestone (184.50ms measured on M4 Max with pre-warm active)
 - [x] Stream large files (10MB+) without loading entire file into memory — Phase 2 (memory-mapped read via mappedIfSafe)
 - [x] N-chunk progressive rendering (currently limited to 2 chunks) — Phase 2 (byte-size splitting at ≤64KB block boundaries)
 - [ ] Reduce per-window memory footprint (Phase 1: WKWebView retain cycle fixed — deinit now fires)

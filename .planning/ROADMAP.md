@@ -48,18 +48,18 @@ Plans:
 - [x] 02-02-PLAN.md — Replace evaluateJavaScript with callAsyncJavaScript for typed chunk injection
 
 ### Phase 3: Launch Speed
-**Goal**: Warm launch to first visible content completes in under 100ms on Apple Silicon
+**Goal**: Measure and optimize launch-to-paint pipeline; WKWebView pre-warm implemented and profiled
 **Depends on**: Phase 2
-**Requirements**: LAUNCH-02, LAUNCH-03
+**Requirements**: LAUNCH-02 (LAUNCH-03 deferred to future milestone)
 **Success Criteria** (what must be TRUE):
-  1. Warm launch (app already launched once since boot) shows first markdown content in under 100ms (measured via os_signpost)
-  2. WKWebView pre-warm decision is resolved with profiling data (implemented if beneficial, documented if rejected)
-  3. Cold vs warm launch times are separately measured and recorded
+  1. WKWebView pre-warm decision is resolved with profiling data (implemented if beneficial, documented if rejected)
+  2. Cold vs warm launch times are separately measured and recorded
+  3. Warm launch-to-paint is profiled with actual Instruments data (184.50ms baseline recorded)
 **Plans**: 3 plans
 Plans:
 - [x] 03-01-PLAN.md — Add launch-to-paint signpost for end-to-end launch measurement
 - [x] 03-02-PLAN.md — Profile launch path, resolve WKWebView pre-warm decision, record timing data
-- [ ] 03-03-PLAN.md — Gap closure: Run Instruments profiling and record actual measured timing data
+- [x] 03-03-PLAN.md — Gap closure: Run Instruments profiling and record actual measured timing data
 
 ### Phase 4: Mermaid Script Loading
 **Goal**: Mermaid diagrams render without a 3MB IPC bridge call per window
