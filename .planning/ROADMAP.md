@@ -42,7 +42,10 @@ Plans:
   2. A large document renders progressively in multiple visible stages (not a single flash of content)
   3. Chunk injection uses typed arguments (no string-interpolated JavaScript with user content)
   4. First screen of content appears before remaining chunks finish loading
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 02-01-PLAN.md — Memory-mapped file read and byte-size N-chunk splitting
+- [ ] 02-02-PLAN.md — Replace evaluateJavaScript with callAsyncJavaScript for typed chunk injection
 
 ### Phase 3: Launch Speed
 **Goal**: Warm launch to first visible content completes in under 100ms on Apple Silicon
@@ -83,7 +86,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Correctness & Measurement Baseline | 1/1 | Complete | 2026-04-06 |
-| 2. Large File Memory & Progressive Rendering | 0/0 | Not started | - |
+| 2. Large File Memory & Progressive Rendering | 0/2 | Not started | - |
 | 3. Launch Speed | 0/0 | Not started | - |
 | 4. Mermaid Script Loading | 0/0 | Not started | - |
 | 5. Window Management | 0/0 | Not started | - |
