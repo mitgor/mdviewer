@@ -105,10 +105,10 @@ final class WebContentView: NSView, WKScriptMessageHandler {
 
     func printContent() {
         // printOperation is broken on macOS 26 (produces blank pages).
-        // Use createPDF + open in Preview as workaround.
+        // Use createPDF + paginate + open in Preview as workaround.
         let tmpFile = FileManager.default.temporaryDirectory
             .appendingPathComponent("MDViewer_print.pdf")
-        exportPDF(to: tmpFile) { success in
+        exportPaginatedPDF(to: tmpFile) { success in
             if success {
                 NSWorkspace.shared.open(tmpFile)
             }
@@ -124,7 +124,7 @@ final class WebContentView: NSView, WKScriptMessageHandler {
 
         panel.begin { [weak self] response in
             guard response == .OK, let url = panel.url else { return }
-            self?.exportPDF(to: url) { success in
+            self?.exportPaginatedPDF(to: url) { success in
                 if success {
                     NSWorkspace.shared.activateFileViewerSelecting([url])
                 }
@@ -132,15 +132,16 @@ final class WebContentView: NSView, WKScriptMessageHandler {
         }
     }
 
-    private func exportPDF(to url: URL, completion: @escaping (Bool) -> Void) {
-        // createPDF captures the full scrollable content as a single page.
-        // This is the correct behavior for a document viewer — continuous PDF.
+    /// createPDF produces one tall continuous page. This slices it into
+    /// properly paginated pages using Core Graphics.
+    private func exportPaginatedPDF(to url: URL, completion: @escaping (Bool) -> Void) {
         webView.createPDF(configuration: WKPDFConfiguration()) { result in
             DispatchQueue.main.async {
                 switch result {
                 case .success(let data):
+                    let paginated = Self.paginatePDF(data: data)
                     do {
-                        try data.write(to: url)
+                        try paginated.write(to: url)
                         completion(true)
                     } catch {
                         Self.showError("Could not save PDF: \(error.localizedDescription)")
@@ -152,6 +153,50 @@ final class WebContentView: NSView, WKScriptMessageHandler {
                 }
             }
         }
+    }
+
+    /// Slice a tall single-page PDF into A4-sized pages.
+    private static func paginatePDF(data: Data) -> Data {
+        guard let provider = CGDataProvider(data: data as CFData),
+              let sourcePDF = CGPDFDocument(provider),
+              let sourcePage = sourcePDF.page(at: 1) else {
+            return data // Fallback to original
+        }
+
+        let sourceRect = sourcePage.getBoxRect(.mediaBox)
+        let pageWidth = sourceRect.width
+        let sourceHeight = sourceRect.height
+
+        // A4: 595.28 x 841.89 points. Use source width, calculate height proportionally.
+        let pageHeight: CGFloat = 841.89 * (pageWidth / 595.28)
+        let pageCount = Int(ceil(sourceHeight / pageHeight))
+
+        if pageCount <= 1 {
+            return data // Already fits on one page
+        }
+
+        let pdfData = NSMutableData()
+        guard let consumer = CGDataConsumer(data: pdfData),
+              let context = CGContext(consumer: consumer, mediaBox: nil, nil) else {
+            return data
+        }
+
+        for i in 0..<pageCount {
+            var mediaBox = CGRect(x: 0, y: 0, width: pageWidth, height: pageHeight)
+            context.beginPage(mediaBox: &mediaBox)
+
+            // The source PDF has origin at bottom-left.
+            // For page i, we want to show the slice starting at y offset from the top.
+            // Source top = sourceHeight, so page 0 shows [sourceHeight - pageHeight, sourceHeight]
+            let yOffset = sourceHeight - CGFloat(i + 1) * pageHeight
+            context.translateBy(x: 0, y: -yOffset)
+            context.drawPDFPage(sourcePage)
+
+            context.endPage()
+        }
+
+        context.closePDF()
+        return pdfData as Data
     }
 
     private static func showError(_ message: String) {
