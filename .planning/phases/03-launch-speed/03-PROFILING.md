@@ -1,70 +1,65 @@
 # Launch Profiling Results
 
-**Device:** Apple Silicon macOS (estimated values -- see note below)
+**Device:** Apple M4 Max, 64GB RAM
+**macOS:** 26.3.1 (Tahoe)
 **Build:** Release, Xcode 26
-**Test file:** Typical markdown file (~10KB)
+**Test file:** Small markdown file (~1-5KB)
+**Measured:** 2026-04-06 via Instruments os_signpost (RenderingPipeline category)
 
-> **Note:** These values are estimates based on industry research data for WKWebView initialization
-> on Apple Silicon macOS. The OSSignposter instrumentation from Plan 01 is in place for actual
-> Instruments measurement. Actual profiling should be performed to validate these estimates.
-> Industry data sources: WWDC sessions on App Launch optimization, WebKit performance benchmarks.
+> Measured values from Instruments os_signpost profiling on Apple Silicon hardware.
 
 ## Timing Data
 
-| Metric | Cold Launch (est.) | Warm Launch (est.) | Target |
-|--------|-------------------|-------------------|--------|
-| launch-to-paint | ~150-200ms | ~80-120ms | <100ms (warm) |
-| open-to-paint | ~60-80ms | ~50-70ms | -- |
-| file-read | ~1-2ms | ~1ms | -- |
-| parse (cmark-gfm) | ~2-5ms | ~2-5ms | -- |
-| chunk-split | <1ms | <1ms | -- |
-| WKWebView init | ~40-60ms | ~30-50ms | <20ms threshold |
-| template load | ~1-2ms | ~1ms | -- |
+| Metric | Warm Launch (Measured) | Target | Status |
+|--------|----------------------|--------|--------|
+| launch-to-paint | 184.50ms | <100ms | FAILED |
+| open-to-paint | 139.00ms | -- | Baseline |
+| Cold launch-to-paint | Not measured | -- | -- |
 
 ### Stage Analysis
 
-- **WKWebView init** is the dominant cost on the critical path, estimated at 30-50ms on warm launch.
-  This exceeds the 20ms threshold defined in D-01.
-- **cmark-gfm parsing** is fast (<5ms) due to C-level implementation.
-- **Template loading** is a synchronous file read but negligible at ~1ms.
-- **Cold launch** adds dylib loading and process creation overhead (~50-80ms additional).
+- **launch-to-paint (184.50ms)** is 84% over the 100ms warm launch target.
+- **open-to-paint (139.00ms)** accounts for most of the launch-to-paint interval. The gap between launch-to-paint and open-to-paint (~45ms) represents app startup overhead before the first file open.
+- **WKWebView init** could not be isolated as a separate interval in the Instruments trace. The pre-warm moves init to applicationDidFinishLaunching, so its cost is absorbed into the pre-open-to-paint startup window.
+- Cold launch was not measured in this session.
 
 ## Decision: WKWebView Pre-Warm
 
-- **WKWebView init cost (estimated):** ~30-50ms on warm launch
+- **WKWebView init cost (measured):** Not separately isolable in trace — absorbed into ~45ms pre-open startup window
 - **Threshold:** 20ms (per D-01)
-- **Decision:** **Implemented**
-- **Evidence:** Industry data consistently shows WKWebView initialization at 50-100+ms on iOS;
-  Apple Silicon macOS is faster but still 30-50ms range. This exceeds the 20ms threshold.
-  Actual measurement via the launch-to-paint signpost should be performed to validate.
-- **Implementation:** Single pre-warmed `WebContentView` created in `applicationDidFinishLaunching`,
-  reused for the first file open. Subsequent files create fresh instances as before (per D-02).
+- **Decision:** **Implemented** (pre-warm is active in these measurements)
+- **Evidence:** Instruments os_signpost trace on M4 Max, macOS 26.3.1. Pre-warm is already active in these measurements — the 184.50ms warm launch includes pre-warmed WKWebView reuse.
+- **Implementation:** Single pre-warmed `WebContentView` created in `applicationDidFinishLaunching`, reused for the first file open.
 
-### Pre-Warm Impact (Expected)
+### Pre-Warm Impact
 
-| Metric | Before Pre-Warm (est.) | After Pre-Warm (est.) | Improvement |
-|--------|----------------------|---------------------|-------------|
-| Warm launch-to-paint | ~80-120ms | ~50-80ms | ~30-40ms saved |
-| First file open-to-paint | ~50-70ms | ~20-30ms | WKWebView init moved off critical path |
-
-The pre-warm moves WKWebView creation to `applicationDidFinishLaunching`, overlapping it with
-the app startup sequence rather than blocking the first file open. The 100ms warm launch target
-(per D-06) should be achievable with this optimization.
+The pre-warm optimization is already active in the measured 184.50ms. Without pre-warm, the warm launch-to-paint would likely be ~215-225ms (adding estimated ~30-40ms WKWebView init back to the critical path). The pre-warm helps but is insufficient to reach the 100ms target.
 
 ### Cold vs Warm Classification (per D-05)
 
-- **Cold launch:** First launch since boot. Includes dylib loading, page faults for mapped
-  frameworks, and initial WKWebView process pool creation. Expected ~150-200ms.
-- **Warm launch:** Subsequent launch with frameworks already in disk cache. The pre-warm
-  optimization primarily benefits this case. Expected ~50-80ms with pre-warm.
+- **Warm launch (measured):** 184.50ms — frameworks in disk cache, second consecutive run
+- **Cold launch:** Not measured in this session
 
-## Validation Steps
+## LAUNCH-03 NOT MET
 
-To validate these estimates with actual Instruments measurement:
+**Warm launch-to-paint: 184.50ms (target: <100ms)**
 
-1. Open Instruments with the "os_signpost" template
-2. Target the Release build of MDViewer
-3. Launch with a test markdown file as argument
-4. Record the `launch-to-paint` and `open-to-paint` intervals
-5. Run twice: cold (restart Mac or purge disk cache) and warm (immediate re-launch)
-6. Compare actual values against estimates above
+The sub-100ms warm launch target is not achieved. The measured warm launch is nearly 2x the target. The pre-warm optimization is active and moves WKWebView init off the critical path, but the remaining pipeline (template loading, HTML string construction, WKWebView loadHTMLString, initial layout + paint) still takes ~139ms from file open to first paint.
+
+### Further Optimization Needed
+
+To reach sub-100ms warm launch, investigation is needed in these areas:
+
+1. **WKWebView loadHTMLString overhead (~139ms open-to-paint):** The dominant cost is WKWebView rendering the HTML page. Possible approaches:
+   - Pre-load the template HTML into the pre-warmed WKWebView (so it's ready to receive content injection)
+   - Use `loadFileURL` instead of `loadHTMLString` (may avoid HTML parsing overhead)
+   - Reduce initial HTML payload size (smaller first chunk)
+
+2. **App startup overhead (~45ms before file open):** The gap between launch-to-paint and open-to-paint suggests ~45ms of startup before the file is opened. Possible approaches:
+   - Defer non-essential startup work
+   - Profile applicationDidFinishLaunching for bottlenecks
+
+3. **Signpost sub-intervals:** Add more granular signpost intervals to isolate exactly which stage within open-to-paint is slowest (file read, parse, template concat, loadHTMLString, JS execution, first paint callback).
+
+**Measurement date:** 2026-04-06
+**Instruments template:** os_signpost
