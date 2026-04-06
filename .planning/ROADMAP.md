@@ -71,7 +71,7 @@ Plans:
   3. Windows without Mermaid content do not load mermaid.min.js at all
 **Plans**: 1 plan
 Plans:
-- [ ] 04-01-PLAN.md — Replace evaluateJavaScript Mermaid loading with script-src injection
+- [x] 04-01-PLAN.md — Replace evaluateJavaScript Mermaid loading with script-src injection
 
 ### Phase 5: Window Management
 **Goal**: Windows remember their position across launches and multiple windows cascade properly

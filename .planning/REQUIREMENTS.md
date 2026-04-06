@@ -9,7 +9,7 @@
 
 - [x] **MEM-01**: WKUserContentController retain cycle fixed — closing a window releases all WKWebView memory
 - [x] **MEM-02**: File reading uses `Data(contentsOf:options:.mappedIfSafe)` — 10MB+ files don't spike heap
-- [ ] **MEM-03**: Mermaid.js loaded via `<script src>` in template, not 3MB `evaluateJavaScript` bridge call
+- [x] **MEM-03**: Mermaid.js loaded via `<script src>` in template, not 3MB `evaluateJavaScript` bridge call
 
 ### Rendering Pipeline
 
@@ -48,7 +48,7 @@
 |-------------|-------|--------|
 | MEM-01 | Phase 1 | Complete |
 | MEM-02 | Phase 2 | Complete |
-| MEM-03 | Phase 4 | Pending |
+| MEM-03 | Phase 4 | Complete |
 | RENDER-01 | Phase 2 | Complete |
 | RENDER-02 | Phase 2 | Complete |
 | LAUNCH-01 | Phase 1 | Complete |
