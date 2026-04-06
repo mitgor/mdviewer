@@ -13,6 +13,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
     private var windows: [MarkdownWindow] = []
     private var openedViaDelegate = false
     private var openToPaintStates: [ObjectIdentifier: OSSignpostIntervalState] = [:]
+    private var hasCompletedFirstLaunchPaint = false
 
     // MARK: - App Lifecycle
 
@@ -28,6 +29,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
                 let url = URL(fileURLWithPath: args[1])
                 self.openFile(url)
             }
+        }
+
+        // End launch signpost if no file is opened within 5 seconds (prevents infinite interval)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) { [weak self] in
+            guard let self = self, !self.hasCompletedFirstLaunchPaint else { return }
+            self.hasCompletedFirstLaunchPaint = true
+            launchSignposter.endInterval("launch-to-paint", launchSignpostState)
         }
     }
 
@@ -91,6 +99,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
     // MARK: - WebContentViewDelegate
 
     func webContentViewDidFinishFirstPaint(_ view: WebContentView) {
+        // End the launch-to-paint interval on the very first paint event
+        if !hasCompletedFirstLaunchPaint {
+            hasCompletedFirstLaunchPaint = true
+            launchSignposter.endInterval("launch-to-paint", launchSignpostState)
+        }
+
         if let paintState = openToPaintStates.removeValue(forKey: ObjectIdentifier(view)) {
             appSignposter.endInterval("open-to-paint", paintState)
         }
