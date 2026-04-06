@@ -14,12 +14,17 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
     private var openedViaDelegate = false
     private var openToPaintStates: [ObjectIdentifier: OSSignpostIntervalState] = [:]
     private var hasCompletedFirstLaunchPaint = false
+    private var preWarmedContentView: WebContentView?
 
     // MARK: - App Lifecycle
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         loadTemplate()
         setupMenu()
+
+        // Pre-warm a WebContentView so the first file open skips WKWebView creation (~40ms on Apple Silicon)
+        preWarmedContentView = WebContentView(frame: .zero)
+
         NSApp.activate(ignoringOtherApps: true)
 
         DispatchQueue.main.async { [weak self] in
@@ -37,6 +42,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
             self.hasCompletedFirstLaunchPaint = true
             launchSignposter.endInterval("launch-to-paint", launchSignpostState)
         }
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        preWarmedContentView = nil
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
@@ -157,7 +166,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
     }
 
     private func displayResult(_ result: RenderResult, for url: URL, paintState: OSSignpostIntervalState) {
-        let contentView = WebContentView(frame: .zero)
+        let contentView: WebContentView
+        if let preWarmed = preWarmedContentView {
+            contentView = preWarmed
+            preWarmedContentView = nil  // Only first file gets pre-warmed view
+        } else {
+            contentView = WebContentView(frame: .zero)
+        }
         contentView.delegate = self
         openToPaintStates[ObjectIdentifier(contentView)] = paintState
 
