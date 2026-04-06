@@ -20,7 +20,7 @@
 
 - [x] **LAUNCH-01**: `os_signpost` instrumentation added to measure each pipeline phase
 - [ ] **LAUNCH-02**: WKWebView pre-warmed at app launch — reused for first file open
-- [ ] **LAUNCH-03**: Sub-100ms warm launch to first visible content on Apple Silicon
+- [x] **LAUNCH-03**: Sub-100ms warm launch to first visible content on Apple Silicon
 
 ### Window Management
 
@@ -53,6 +53,6 @@
 | RENDER-02 | Phase 2 | Complete |
 | LAUNCH-01 | Phase 1 | Complete |
 | LAUNCH-02 | Phase 3 | Pending |
-| LAUNCH-03 | Phase 3 | Pending |
+| LAUNCH-03 | Phase 3 | Complete |
 | WIN-01 | Phase 5 | Pending |
 | WIN-02 | Phase 5 | Pending |
