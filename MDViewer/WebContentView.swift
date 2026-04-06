@@ -111,35 +111,27 @@ final class WebContentView: NSView, WKScriptMessageHandler {
         guard !remainingChunks.isEmpty else { return }
 
         let chunkInjectState = renderingSignposter.beginInterval("chunk-inject")
-
-        var jsChunks = "["
-        for (index, chunk) in remainingChunks.enumerated() {
-            if index > 0 { jsChunks += "," }
-            jsChunks += "`"
-            for char in chunk {
-                switch char {
-                case "\\": jsChunks += "\\\\"
-                case "`":  jsChunks += "\\`"
-                case "$":  jsChunks += "\\$"
-                default:   jsChunks.append(char)
-                }
-            }
-            jsChunks += "`"
-        }
-        jsChunks += "]"
-
-        let js = """
-        (function(){
-            var chunks = \(jsChunks);
-            chunks.forEach(function(chunk, i) {
-                setTimeout(function(){ window.appendChunk(chunk); }, i * 16);
-            });
-        })();
-        """
-
-        webView.evaluateJavaScript(js)
+        let chunks = remainingChunks
+        let chunkCount = chunks.count
         remainingChunks = []
-        renderingSignposter.endInterval("chunk-inject", chunkInjectState)
+
+        for (index, chunk) in chunks.enumerated() {
+            let delay = Double(index) * 0.016  // 16ms stagger per chunk
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                self?.webView.callAsyncJavaScript(
+                    "window.appendChunk(html)",
+                    arguments: ["html": chunk],
+                    in: nil,
+                    in: .page,
+                    completionHandler: { _ in
+                        // End signpost after last chunk injection completes
+                        if index == chunkCount - 1 {
+                            renderingSignposter.endInterval("chunk-inject", chunkInjectState)
+                        }
+                    }
+                )
+            }
+        }
     }
 
     private var documentTitle: String = ""
