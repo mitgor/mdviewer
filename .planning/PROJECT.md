@@ -31,8 +31,8 @@ Open a markdown file and see beautifully rendered content instantly — sub-200m
 ### Active
 
 - [ ] Sub-100ms launch to first visible content
-- [ ] Stream large files (10MB+) without loading entire file into memory
-- [ ] N-chunk progressive rendering (currently limited to 2 chunks)
+- [x] Stream large files (10MB+) without loading entire file into memory — Phase 2 (memory-mapped read via mappedIfSafe)
+- [x] N-chunk progressive rendering (currently limited to 2 chunks) — Phase 2 (byte-size splitting at ≤64KB block boundaries)
 - [ ] Reduce per-window memory footprint (Phase 1: WKWebView retain cycle fixed — deinit now fires)
 - [ ] Fix window position persistence (currently resets every launch)
 - [ ] Proper window cascading for multiple files
@@ -71,6 +71,9 @@ Open a markdown file and see beautifully rendered content instantly — sub-200m
 | loadHTMLString over loadFileURL | Simpler, works when template loaded before delegate fires | ✓ Good |
 | WeakScriptMessageProxy over direct self | Breaks WKUserContentController retain cycle | ✓ Good |
 | OSSignposter over os_signpost() | Modern Swift API, type-safe interval tracking | ✓ Good |
+| mappedIfSafe over String(contentsOf:) | Avoids full-file heap allocation for 10MB+ files | ✓ Good |
+| callAsyncJavaScript over evaluateJavaScript | Typed arguments eliminate injection risk from string interpolation | ✓ Good |
+| Byte-size chunking over block-count chunking | ≤64KB chunks at block boundaries for true N-chunk rendering | ✓ Good |
 
 ## Evolution
 
@@ -90,4 +93,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-06 after Phase 1 — correctness & measurement baseline complete*
+*Last updated: 2026-04-06 after Phase 2 — large file memory & progressive rendering complete*
