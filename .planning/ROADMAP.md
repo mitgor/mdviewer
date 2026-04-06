@@ -29,7 +29,9 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Opening and closing 10 windows in sequence does not grow sustained RSS
   3. os_signpost intervals appear in Instruments for file-read, parse, chunk-split, and chunk-inject phases
   4. Baseline measurements (cold launch, warm launch, peak RSS for 10MB file) are recorded
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 01-01-PLAN.md — Fix WKWebView retain cycle and add OSSignposter pipeline instrumentation
 
 ### Phase 2: Large File Memory & Progressive Rendering
 **Goal**: Users can open 10MB+ markdown files without memory spikes, and content appears progressively in multiple chunks
@@ -80,7 +82,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Correctness & Measurement Baseline | 0/0 | Not started | - |
+| 1. Correctness & Measurement Baseline | 0/1 | Planning complete | - |
 | 2. Large File Memory & Progressive Rendering | 0/0 | Not started | - |
 | 3. Launch Speed | 0/0 | Not started | - |
 | 4. Mermaid Script Loading | 0/0 | Not started | - |
