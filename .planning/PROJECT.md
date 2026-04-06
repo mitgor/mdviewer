@@ -34,8 +34,8 @@ Open a markdown file and see beautifully rendered content instantly — sub-200m
 - [x] Stream large files (10MB+) without loading entire file into memory — Phase 2 (memory-mapped read via mappedIfSafe)
 - [x] N-chunk progressive rendering (currently limited to 2 chunks) — Phase 2 (byte-size splitting at ≤64KB block boundaries)
 - [x] Reduce per-window memory footprint — Phase 4 (Mermaid script-src loading eliminates 3MB IPC per window; Phase 1 fixed WKWebView retain cycle)
-- [ ] Fix window position persistence (currently resets every launch)
-- [ ] Proper window cascading for multiple files
+- [x] Fix window position persistence — Phase 5 (per-file setFrameAutosaveName with URL-derived keys)
+- [x] Proper window cascading for multiple files — Phase 5 (cascadeTopLeft with lastCascadePoint tracking)
 
 ### Out of Scope
 
@@ -93,4 +93,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-07 after Phase 4 — Mermaid script-src loading complete*
+*Last updated: 2026-04-07 after Phase 5 — window management complete (v2.0 milestone finished)*
