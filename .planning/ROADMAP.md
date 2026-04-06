@@ -55,7 +55,10 @@ Plans:
   1. Warm launch (app already launched once since boot) shows first markdown content in under 100ms (measured via os_signpost)
   2. WKWebView pre-warm decision is resolved with profiling data (implemented if beneficial, documented if rejected)
   3. Cold vs warm launch times are separately measured and recorded
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 03-01-PLAN.md — Add launch-to-paint signpost for end-to-end launch measurement
+- [ ] 03-02-PLAN.md — Profile launch path, resolve WKWebView pre-warm decision, record timing data
 
 ### Phase 4: Mermaid Script Loading
 **Goal**: Mermaid diagrams render without a 3MB IPC bridge call per window
@@ -87,6 +90,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 |-------|----------------|--------|-----------|
 | 1. Correctness & Measurement Baseline | 1/1 | Complete | 2026-04-06 |
 | 2. Large File Memory & Progressive Rendering | 0/2 | Not started | - |
-| 3. Launch Speed | 0/0 | Not started | - |
+| 3. Launch Speed | 0/2 | Not started | - |
 | 4. Mermaid Script Loading | 0/0 | Not started | - |
 | 5. Window Management | 0/0 | Not started | - |
