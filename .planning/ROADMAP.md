@@ -45,7 +45,7 @@ Plans:
 **Plans**: 2 plans
 Plans:
 - [x] 02-01-PLAN.md — Memory-mapped file read and byte-size N-chunk splitting
-- [ ] 02-02-PLAN.md — Replace evaluateJavaScript with callAsyncJavaScript for typed chunk injection
+- [x] 02-02-PLAN.md — Replace evaluateJavaScript with callAsyncJavaScript for typed chunk injection
 
 ### Phase 3: Launch Speed
 **Goal**: Warm launch to first visible content completes in under 100ms on Apple Silicon
