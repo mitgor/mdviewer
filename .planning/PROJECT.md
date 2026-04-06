@@ -30,7 +30,12 @@ Open a markdown file and see beautifully rendered content instantly — sub-200m
 
 ### Active
 
-(None yet — define in next milestone)
+- [ ] Sub-100ms launch to first visible content
+- [ ] Stream large files (10MB+) without loading entire file into memory
+- [ ] N-chunk progressive rendering (currently limited to 2 chunks)
+- [ ] Reduce per-window memory footprint
+- [ ] Fix window position persistence (currently resets every launch)
+- [ ] Proper window cascading for multiple files
 
 ### Out of Scope
 
@@ -83,4 +88,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-06 after initialization*
+*Last updated: 2026-04-06 after milestone v2.0 — speed & memory optimizations*
