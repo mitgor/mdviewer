@@ -83,7 +83,7 @@ Plans:
   3. Window position persistence does not conflict across different files
 **Plans**: 1 plan
 Plans:
-- [ ] 05-01-PLAN.md — Per-file window position persistence and multi-window cascading
+- [x] 05-01-PLAN.md — Per-file window position persistence and multi-window cascading
 
 ## Progress
 

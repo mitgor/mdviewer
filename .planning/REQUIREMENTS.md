@@ -24,8 +24,8 @@
 
 ### Window Management
 
-- [ ] **WIN-01**: Window position and size persisted across app launches via `setFrameAutosaveName`
-- [ ] **WIN-02**: Multiple windows cascade properly instead of stacking at same position
+- [x] **WIN-01**: Window position and size persisted across app launches via `setFrameAutosaveName`
+- [x] **WIN-02**: Multiple windows cascade properly instead of stacking at same position
 
 ## v2 Requirements
 
@@ -54,5 +54,5 @@
 | LAUNCH-01 | Phase 1 | Complete |
 | LAUNCH-02 | Phase 3 | Complete |
 | LAUNCH-03 | Deferred | Deferred to future milestone (184.50ms measured, target <100ms) |
-| WIN-01 | Phase 5 | Pending |
-| WIN-02 | Phase 5 | Pending |
+| WIN-01 | Phase 5 | Complete |
+| WIN-02 | Phase 5 | Complete |

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 04-01-PLAN.md
-last_updated: "2026-04-06T21:59:50.080Z"
+stopped_at: Completed 05-01-PLAN.md
+last_updated: "2026-04-06T22:12:56.063Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 5
-  completed_phases: 4
-  total_plans: 7
-  completed_plans: 7
+  completed_phases: 5
+  total_plans: 8
+  completed_plans: 8
   percent: 20
 ---
 
@@ -21,12 +21,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-06)
 
 **Core value:** Open a markdown file and see beautifully rendered content instantly
-**Current focus:** Phase 04 — mermaid-script-loading
+**Current focus:** Phase 05 — window-management
 
 ## Current Position
 
-Phase: 5
-Plan: Not started
+Phase: 05 (window-management) — EXECUTING
+Plan: 1 of 1
 Status: Phase complete — ready for verification
 Last activity: 2026-04-06
 
@@ -57,6 +57,7 @@ Progress: [██░░░░░░░░] 20%
 | Phase 03-launch-speed P01 | 1 | 1 tasks | 2 files |
 | Phase 03-launch-speed P02 | 3 | 2 tasks | 2 files |
 | Phase 04-mermaid-script-loading P01 | 1 | 2 tasks | 2 files |
+| Phase 05-window-management P01 | 1 | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -75,6 +76,7 @@ Recent decisions affecting current work:
 - [Phase 03-launch-speed]: Module-level launchSignposter in main.swift for earliest measurement point
 - [Phase 03-launch-speed]: WKWebView pre-warm implemented based on estimated 30-50ms init cost exceeding 20ms threshold
 - [Phase 04-mermaid-script-loading]: Script-src injection for mermaid.min.js -- DOM createElement instead of 3MB evaluateJavaScript IPC
+- [Phase 05-window-management]: Per-file autosave name format MDViewer:{absolutePath} with frame-change detection to skip cascade on restore
 
 ### Pending Todos
 
@@ -87,6 +89,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-06T21:56:24.521Z
-Stopped at: Completed 04-01-PLAN.md
+Last session: 2026-04-06T22:12:56.061Z
+Stopped at: Completed 05-01-PLAN.md
 Resume file: None
