@@ -69,7 +69,9 @@ Plans:
   1. A markdown file with Mermaid diagrams renders correctly with diagrams visible
   2. Instruments shows no multi-megabyte evaluateJavaScript IPC call during Mermaid initialization
   3. Windows without Mermaid content do not load mermaid.min.js at all
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 04-01-PLAN.md — Replace evaluateJavaScript Mermaid loading with script-src injection
 
 ### Phase 5: Window Management
 **Goal**: Windows remember their position across launches and multiple windows cascade properly
@@ -92,5 +94,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 1. Correctness & Measurement Baseline | 1/1 | Complete | 2026-04-06 |
 | 2. Large File Memory & Progressive Rendering | 0/2 | Not started | - |
 | 3. Launch Speed | 0/3 | Not started | - |
-| 4. Mermaid Script Loading | 0/0 | Not started | - |
+| 4. Mermaid Script Loading | 0/1 | Not started | - |
 | 5. Window Management | 0/0 | Not started | - |
