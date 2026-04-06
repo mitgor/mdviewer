@@ -44,15 +44,15 @@
 
 ## Traceability
 
-| Requirement | Phase |
-|-------------|-------|
-| MEM-01 | — |
-| MEM-02 | — |
-| MEM-03 | — |
-| RENDER-01 | — |
-| RENDER-02 | — |
-| LAUNCH-01 | — |
-| LAUNCH-02 | — |
-| LAUNCH-03 | — |
-| WIN-01 | — |
-| WIN-02 | — |
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| MEM-01 | Phase 1 | Pending |
+| MEM-02 | Phase 2 | Pending |
+| MEM-03 | Phase 4 | Pending |
+| RENDER-01 | Phase 2 | Pending |
+| RENDER-02 | Phase 2 | Pending |
+| LAUNCH-01 | Phase 1 | Pending |
+| LAUNCH-02 | Phase 3 | Pending |
+| LAUNCH-03 | Phase 3 | Pending |
+| WIN-01 | Phase 5 | Pending |
+| WIN-02 | Phase 5 | Pending |
