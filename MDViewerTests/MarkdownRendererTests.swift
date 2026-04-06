@@ -96,4 +96,58 @@ final class MarkdownRendererTests: XCTestCase {
         XCTAssertNotNil(result)
         XCTAssertTrue(result!.page.contains("File Test"))
     }
+
+    func testChunkSplitsAtBlockBoundaries() {
+        let renderer = MarkdownRenderer()
+        // Create content where each paragraph is ~1KB, need >64 paragraphs to exceed 64KB
+        var md = ""
+        for i in 0..<80 {
+            md += "Paragraph \(i): " + String(repeating: "x", count: 900) + "\n\n"
+        }
+        let (chunks, _) = renderer.render(markdown: md)
+        XCTAssertGreaterThan(chunks.count, 1)
+        // Each chunk after the first should start at a block-tag boundary
+        for chunk in chunks.dropFirst() {
+            let trimmed = chunk.trimmingCharacters(in: .whitespacesAndNewlines)
+            XCTAssertTrue(
+                trimmed.hasPrefix("<p") || trimmed.hasPrefix("<h") ||
+                trimmed.hasPrefix("<div") || trimmed.hasPrefix("<ul") ||
+                trimmed.hasPrefix("<ol") || trimmed.hasPrefix("<table") ||
+                trimmed.hasPrefix("<pre") || trimmed.hasPrefix("<blockquote") ||
+                trimmed.hasPrefix("<hr") || trimmed.hasPrefix("<li"),
+                "Each chunk after the first should start at a block-tag boundary, got: \(String(trimmed.prefix(30)))"
+            )
+        }
+    }
+
+    func testMemoryMappedFileRead() {
+        let renderer = MarkdownRenderer()
+        let tmpFile = FileManager.default.temporaryDirectory.appendingPathComponent("test_mmap.md")
+        // Write content that will be read via mappedIfSafe
+        let content = "# Memory Mapped\n\n" + String(repeating: "Test content. ", count: 100)
+        try! content.write(to: tmpFile, atomically: true, encoding: .utf8)
+        defer { try? FileManager.default.removeItem(at: tmpFile) }
+
+        let template = SplitTemplate(templateHTML: "<body>{{FIRST_CHUNK}}</body>")
+        let result = renderer.renderFullPage(fileURL: tmpFile, template: template)
+        XCTAssertNotNil(result)
+        XCTAssertTrue(result!.page.contains("Memory Mapped"))
+    }
+
+    func testChunkByteSizeVerification() {
+        let renderer = MarkdownRenderer()
+        var md = ""
+        // Generate ~300KB of content to get multiple chunks
+        for i in 0..<600 {
+            md += "## Section \(i)\n\n" + String(repeating: "Content ", count: 50) + "\n\n"
+        }
+        let (chunks, _) = renderer.render(markdown: md)
+        XCTAssertGreaterThan(chunks.count, 1, "Large content should produce multiple chunks")
+        // Verify byte sizes: each chunk should be roughly <=64KB
+        for (index, chunk) in chunks.enumerated() {
+            let byteCount = chunk.utf8.count
+            XCTAssertLessThan(byteCount, 80_000,
+                "Chunk \(index) byte size \(byteCount) should be roughly <=64KB")
+        }
+    }
 }
