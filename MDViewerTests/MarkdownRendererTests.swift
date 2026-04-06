@@ -50,12 +50,12 @@ final class MarkdownRendererTests: XCTestCase {
     func testChunkingSplitsLargeContent() {
         let renderer = MarkdownRenderer()
         var md = ""
-        // Each iteration ~400 bytes of markdown -> ~500 bytes HTML. 200 iterations -> ~100KB HTML
-        for i in 0..<200 {
+        // Generate ~200KB of markdown content to ensure well over 64KB of HTML output
+        for i in 0..<500 {
             md += "## Heading \(i)\n\n" + String(repeating: "Word ", count: 60) + "\n\n"
         }
         let (chunks, _) = renderer.render(markdown: md)
-        // Content >64KB should produce multiple chunks via byte-size splitting
+        // Content well over 64KB should produce multiple chunks via byte-size splitting
         XCTAssertGreaterThan(chunks.count, 2, "Content well over 64KB should produce more than 2 chunks")
         // Verify each chunk is at most ~64KB (allow tolerance for block-boundary splitting)
         for (index, chunk) in chunks.enumerated() {

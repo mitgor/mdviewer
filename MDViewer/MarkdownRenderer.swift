@@ -32,7 +32,7 @@ let renderingSignposter = OSSignposter(
 )
 
 final class MarkdownRenderer {
-    private let chunkThreshold = 50
+    private let chunkByteLimit = 64 * 1024
 
     private static let mermaidRegex = try! NSRegularExpression(
         pattern: #"<pre><code class="language-mermaid">([\s\S]*?)</code></pre>"#
@@ -65,7 +65,8 @@ final class MarkdownRenderer {
 
         // File read interval
         let readState = renderingSignposter.beginInterval("file-read", id: spID)
-        guard let markdown = try? String(contentsOf: fileURL, encoding: .utf8) else {
+        guard let data = try? Data(contentsOf: fileURL, options: .mappedIfSafe),
+              let markdown = String(data: data, encoding: .utf8) else {
             renderingSignposter.endInterval("file-read", readState)
             return nil
         }
@@ -179,16 +180,46 @@ final class MarkdownRenderer {
 
     private func chunkHTML(_ html: String) -> [String] {
         let nsString = html as NSString
-        let matches = Self.blockTagRegex.matches(in: html, range: NSRange(location: 0, length: nsString.length))
+        let length = nsString.length
 
-        if matches.count <= chunkThreshold {
+        let matches = Self.blockTagRegex.matches(
+            in: html,
+            range: NSRange(location: 0, length: length)
+        )
+
+        // No block tags or small content: single chunk
+        guard !matches.isEmpty else { return [html] }
+
+        // Check if entire content fits in one chunk
+        if html.utf8.count <= chunkByteLimit {
             return [html]
         }
 
-        let splitPoint = matches[chunkThreshold - 1].range.location
-        let firstChunk = String(nsString.substring(to: splitPoint))
-        let rest = String(nsString.substring(from: splitPoint))
+        var chunks: [String] = []
+        var chunkStart = 0
 
-        return [firstChunk, rest]
+        for i in 1..<matches.count {
+            let pos = matches[i].range.location
+            let candidateRange = NSRange(location: chunkStart, length: pos - chunkStart)
+            let candidate = nsString.substring(with: candidateRange)
+
+            if candidate.utf8.count > chunkByteLimit {
+                // Current accumulation exceeds limit.
+                // Split at the previous block tag (matches[i-1]).
+                let prevPos = matches[i - 1].range.location
+                if prevPos > chunkStart {
+                    let chunkRange = NSRange(location: chunkStart, length: prevPos - chunkStart)
+                    chunks.append(nsString.substring(with: chunkRange))
+                    chunkStart = prevPos
+                }
+            }
+        }
+
+        // Append remaining
+        if chunkStart < length {
+            chunks.append(nsString.substring(from: chunkStart))
+        }
+
+        return chunks.isEmpty ? [html] : chunks
     }
 }
