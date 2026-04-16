@@ -118,7 +118,10 @@ Plans:
   1. After the first file is open, opening a second file shows content in under 100ms (measured via OSSignposter)
   2. Pool replenishes automatically after a view is acquired (pool never stays empty)
   3. If a WebContent process crashes, the pool discards the dead view and creates a replacement
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 07-01-PLAN.md -- Create WebViewPool class and add pool support methods to WebContentView
+- [ ] 07-02-PLAN.md -- Integrate pool into AppDelegate and add unit tests
 
 ### Phase 8: Streaming Pipeline
 **Goal**: First visible content appears while the parser is still producing remaining chunks, closing the gap to sub-150ms warm launch
@@ -157,6 +160,6 @@ Phases execute in numeric order: 6 -> 7 -> 8 -> 9
 | 4. Mermaid Script Loading | v2.0 | 1/1 | Complete | 2026-04-16 |
 | 5. Window Management | v2.0 | 1/1 | Complete | 2026-04-16 |
 | 6. Vendored cmark | v2.1 | 0/3 | Not started | - |
-| 7. WKWebView Pool | v2.1 | 0/? | Not started | - |
+| 7. WKWebView Pool | v2.1 | 0/2 | Not started | - |
 | 8. Streaming Pipeline | v2.1 | 0/? | Not started | - |
 | 9. Native Text Rendering | v2.1 | 0/? | Not started | - |
