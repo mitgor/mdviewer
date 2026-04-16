@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Deep Optimization
 status: executing
-stopped_at: Roadmap created for v2.1 milestone
-last_updated: "2026-04-16T07:40:44.287Z"
-last_activity: 2026-04-16 -- Phase 6 planning complete
+stopped_at: Completed 06-01-PLAN.md
+last_updated: "2026-04-16T08:12:37.844Z"
+last_activity: 2026-04-16
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 3
-  completed_plans: 0
-  percent: 0
+  completed_plans: 1
+  percent: 33
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-16)
 
 **Core value:** Open a markdown file and see beautifully rendered content instantly
-**Current focus:** Phase 6 - Vendored cmark
+**Current focus:** Phase 06 — vendored-cmark
 
 ## Current Position
 
-Phase: 6 of 9 (Vendored cmark) -- first phase of v2.1
-Plan: 0 of ? in current phase
+Phase: 06 (vendored-cmark) — EXECUTING
+Plan: 2 of 3
 Status: Ready to execute
-Last activity: 2026-04-16 -- Phase 6 planning complete
+Last activity: 2026-04-16
 
 Progress: [..........] 0% (v2.1 phases)
 
@@ -47,6 +47,7 @@ Recent decisions affecting current work:
 - [v2.0] Per-file autosave name format MDViewer:{absolutePath}
 - [v2.1] Zero-copy C-to-JS bridge deferred (research: <0.1ms cost)
 - [v2.1] Incremental cmark parsing not viable (cmark_parser_finish required before AST)
+- [Phase 06-vendored-cmark]: Unified modulemap: merged cmark_gfm_extensions into cmark_gfm module for Xcode explicit modules compatibility
 
 ### Pending Todos
 
@@ -61,6 +62,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-16
-Stopped at: Roadmap created for v2.1 milestone
+Last session: 2026-04-16T08:12:37.841Z
+Stopped at: Completed 06-01-PLAN.md
 Resume file: None

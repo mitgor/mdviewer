@@ -7,7 +7,7 @@
 
 ### Vendored cmark
 
-- [ ] **CMARK-01**: App uses a vendored copy of swift-cmark built as part of the Xcode project (no SPM dependency)
+- [x] **CMARK-01**: App uses a vendored copy of swift-cmark built as part of the Xcode project (no SPM dependency)
 - [ ] **CMARK-02**: Vendored cmark exposes a chunked HTML callback API that emits ≤64KB blocks at top-level AST boundaries
 - [ ] **CMARK-03**: Mermaid code blocks are detected in the C renderer (info string check) and emitted as placeholder divs
 - [ ] **CMARK-04**: MarkdownRenderer uses the chunked API directly, eliminating regex-based HTML chunking and mermaid regex scan
@@ -75,7 +75,7 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CMARK-01 | Phase 6 | Pending |
+| CMARK-01 | Phase 6 | Complete |
 | CMARK-02 | Phase 6 | Pending |
 | CMARK-03 | Phase 6 | Pending |
 | CMARK-04 | Phase 6 | Pending |
