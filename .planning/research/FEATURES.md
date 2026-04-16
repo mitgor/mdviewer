@@ -1,258 +1,321 @@
-# Feature Landscape: Performance Optimization for macOS Markdown Viewer
+# Feature Landscape: v2.1 Deep Rendering Optimization
 
-**Domain:** Native macOS document viewer (AppKit + WKWebView + cmark-gfm)
-**Researched:** 2026-04-03
-**Research mode:** Ecosystem — what fast document viewers implement
+**Domain:** Deep rendering optimization for native macOS markdown viewer
+**Researched:** 2026-04-16
+**Focus:** Five proposed optimizations to achieve sub-100ms launch-to-paint
 
 ---
 
-## Context: Current State
+## Current Baseline
 
-MDViewer already has a meaningful performance foundation:
-- Background thread markdown parsing (cmark-gfm, C library, <10ms for typical files)
-- Pre-split template (no string scanning at render time)
-- Cached regex patterns
-- 2-chunk progressive rendering (first 50 block elements, then remainder)
-- `firstPaint` JS message back-channel to gate chunk injection on actual DOM readiness
+- **Warm launch time:** 184.50ms on M4 Max (measured with OSSignposter)
+- **Target:** Sub-100ms launch-to-first-paint
+- **Budget to cut:** ~85ms minimum
+- **Existing optimizations already shipped (v1 + v2.0):**
+  - Memory-mapped file read (`mappedIfSafe`)
+  - Progressive chunking (<=64KB block boundaries, N-chunk)
+  - Single WKWebView pre-warm (saves ~40ms on first file)
+  - Background-thread parsing
+  - Cached regex, single-pass entity encoding
+  - Batched JS chunk injection via `callAsyncJavaScript`
+  - Mermaid script-src injection (no evaluateJavaScript for 3MB payload)
+  - WeakScriptMessageProxy (retain cycle fixed)
 
-Known bottlenecks from codebase audit:
-- File read is synchronous (`String(contentsOf:)`) on the background thread — blocks for large files
-- Chunking always produces at most 2 chunks; second chunk can be multi-megabyte
-- Mermaid JS (3 MB) injected via `evaluateJavaScript` string bridge on every diagram window
-- Mermaid JS read from disk synchronously on first use (main thread)
-- `WKUserContentController` retain cycle — `WebContentView` never released
-- `injectRemainingChunks` builds JS by manual string construction (escaping gaps)
-- Window frame persistence broken (`loadSavedFrame` always returns nil)
+### Where Time Is Spent (estimated breakdown of 184.50ms)
+
+| Phase | Est. Time | Notes |
+|-------|-----------|-------|
+| File read (mappedIfSafe) | ~1-2ms | Already optimized |
+| cmark parse | ~3-5ms | Already fast; C library |
+| Mermaid regex scan | ~1-2ms | Two regex passes over HTML |
+| Block-tag regex chunking | ~1-2ms | Regex scan for split points |
+| String(cString:) copy | <1ms | C string -> Swift String |
+| Template concatenation | <1ms | Already optimized with SplitTemplate |
+| **loadHTMLString + WebKit pipeline** | **~80-120ms** | IPC transfer, HTML parse, CSS layout, paint, firstPaint callback |
+| WKWebView init (pre-warmed) | ~0ms | Already pre-warmed for first file |
+| WKWebView init (2nd+ file) | ~30-40ms | No pre-warm available |
+
+**Key insight:** The Swift-side pipeline (file read through template assembly) takes ~10-15ms total. The WKWebView pipeline (loadHTMLString through firstPaint callback) takes ~80-120ms. The optimization budget is dominated by WebKit, not by the Swift code.
 
 ---
 
 ## Table Stakes
 
-Features users expect from any "fast" document viewer. Missing or broken = product feels broken.
+Optimizations that directly address measured bottlenecks with proven patterns.
 
-| Feature | Why Expected | Complexity | Current Status |
-|---------|--------------|------------|----------------|
-| Sub-100ms to first visible content | Finder quick-look pattern sets this bar | Medium | ~150-200ms; WKWebView cold init is the bottleneck |
-| No jank during scroll | Smooth scroll is a macOS system expectation | Low | WKWebView handles this; no action needed |
-| Memory release on window close | Baseline hygiene; multiple windows must not accumulate | Medium | Broken — retain cycle in `WKUserContentController` means `WebContentView` never deallocates |
-| Correct window position restore | Users reposition windows; position should persist | Low | Broken — `loadSavedFrame` always returns nil |
-| No main-thread stall on open | File open must not freeze the app | Low | Background parsing already done; file read is on bg thread |
-| Reasonable memory for small files | <50 MB RSS for a 100 KB markdown file | Low | Currently acceptable; per-window `WKWebView` is ~30-40 MB baseline |
-| Opens files 10 MB+ without OOM | Large tech docs, generated output | High | Not implemented — `String(contentsOf:)` loads entire file into memory |
-| Correct rendering at all sizes | Content must not clip or overflow | Low | Already correct |
+### 1. WKWebView Warm Pool (2-3 Pre-warmed Views)
+
+| Attribute | Value |
+|-----------|-------|
+| **Complexity** | Low |
+| **Est. savings** | 30-40ms on 2nd+ file; 0ms on first file |
+| **Confidence** | HIGH |
+| **Risk** | LOW |
+
+**What it does:** Extends the existing single-`preWarmedContentView` pattern to a pool of 2-3 pre-created WKWebView instances. When a file opens, a view is dequeued from the pool. Optionally, closed views are recycled (load `about:blank`, re-pool).
+
+**Why it's table stakes:** The app already proves this pattern works -- the single pre-warm in `AppDelegate` saves ~40ms on the first file. But opening a second file while the first is displayed pays the full WKWebView init cost (~30-40ms) because the pre-warmed view was consumed. Multi-file workflows are the primary use case (drag multiple .md files onto the Dock icon).
+
+**Architecture impact:** Minimal. Replace `preWarmedContentView: WebContentView?` with a `WebViewPool` class that manages a FIFO queue of pre-created views. Pool creates replacement views lazily after dequeue.
+
+**Dependencies:** None. Fully independent of all other features.
+
+**Implementation notes:**
+- Memory cost: ~15-30MB per idle WKWebView. Pool of 3 = ~45-90MB. Acceptable for desktop app.
+- WKProcessPool is auto-shared on macOS 12+ (noted in PROJECT.md Context section), so no manual pool management needed.
+- Create pool views in `applicationDidFinishLaunching` after first-paint completes (don't compete with initial file render).
+- Recycling on window close is optional but reduces steady-state memory.
+
+**Evidence:** [WebViewWarmUper](https://github.com/bernikovich/WebViewWarmUper) validates the pool pattern. MDViewer's own pre-warm code proves it works.
+
+---
+
+### 2. Vendored swift-cmark with Direct-to-Chunk AST Walking
+
+| Attribute | Value |
+|-----------|-------|
+| **Complexity** | High |
+| **Est. savings** | 5-15ms (eliminates regex passes + intermediate HTML allocation) |
+| **Confidence** | MEDIUM |
+| **Risk** | MEDIUM-HIGH |
+
+**What it does:** Instead of:
+1. `cmark_render_html_with_mem()` -> monolithic HTML string (~150KB for 100KB markdown)
+2. `processMermaidBlocks()` -> regex scan entire HTML for mermaid code blocks
+3. `chunkHTML()` -> regex scan entire HTML for block tag boundaries
+
+Walk the AST once using `cmark_iter_new`/`cmark_iter_next`, emitting HTML directly into chunk buffers. Mermaid detection happens inline (check `CMARK_NODE_CODE_BLOCK` + `cmark_node_get_fence_info` for "mermaid"). Chunk boundaries happen at top-level block EXIT events when byte budget is exceeded.
+
+**Why it's table stakes:** This collapses three serial passes into one. For a 100KB markdown file producing ~150KB HTML, it eliminates ~300KB of redundant regex scanning and one large intermediate allocation. More importantly, it's the architectural foundation for streaming and NSTextView rendering.
+
+**Architecture impact:** HIGH. Requires:
+- Vendoring swift-cmark as a local SPM package (currently remote `gfm` branch, revision `924936d`)
+- Writing a `ChunkedHTMLRenderer` that mirrors `S_render_node` in `html.c` (~380 lines covering all node types) but emits into chunked buffers
+- Supporting GFM extension render callbacks (`node->extension->html_render_func`) for table, strikethrough, autolink, tasklist
+
+**Key findings from cmark source analysis:**
+
+The existing `cmark_render_html_with_mem` (html.c:487-517) is just an iterator loop:
+```c
+cmark_iter *iter = cmark_iter_new(root);
+while ((ev_type = cmark_iter_next(iter)) != CMARK_EVENT_DONE) {
+    cur = cmark_iter_get_node(iter);
+    S_render_node(&renderer, cur, ev_type, options);
+}
+```
+
+The `cmark_html_renderer` struct (render.h:37-46) carries state:
+```c
+struct cmark_html_renderer {
+    cmark_strbuf *html;      // output buffer -- this is what we'd split into chunks
+    cmark_node *plain;       // NULL except inside image alt text
+    cmark_llist *filter_extensions;
+    unsigned int footnote_ix;
+    unsigned int written_footnote_ix;
+    void *opaque;
+};
+```
+
+**Approach options:**
+1. **Fork html.c directly** -- copy `S_render_node` and modify to emit chunks. Pros: exact output parity guaranteed. Cons: must maintain fork when cmark updates.
+2. **Use public API only** -- render each top-level child node separately via `cmark_render_html_with_mem(child, ...)`. Pros: no internal API dependency. Cons: footnotes break (they reference across nodes), extension state may not carry across calls.
+3. **Hybrid** -- use iterator with public accessors, but write the HTML emission in Swift calling `cmark_node_get_literal`, `cmark_node_get_fence_info`, etc. Pros: no C fork. Cons: must reimplement all HTML escaping, entity encoding, and extension-specific rendering in Swift.
+
+**Recommendation:** Option 1 (fork html.c). The function is self-contained (~380 lines), well-structured, and the output format must match exactly. A fork with chunk-splitting added is safer than reimplementing.
+
+**Dependencies:** None, but enables Features 3, 4, and 5.
+
+**Evidence:** cmark-gfm.h line 259: "One natural application is an HTML renderer, where an ENTER event outputs an open tag and an EXIT event outputs a close tag." The API is explicitly designed for this.
 
 ---
 
 ## Differentiators
 
-Features that make this viewer distinctly fast or capable, beyond baseline expectations.
+Optimizations that go beyond standard patterns. High potential but higher risk/complexity.
 
-### 1. True N-Chunk Progressive Rendering
+### 3. Streaming Parse Pipeline (Incremental Feed, Early First-Screen Emit)
 
-**What:** Split HTML output into N equal-sized chunks (configurable, e.g. 200 block elements per chunk) and inject them via staggered `setTimeout` calls, spreading parse work across multiple animation frames.
+| Attribute | Value |
+|-----------|-------|
+| **Complexity** | High |
+| **Est. savings** | 2-8ms (first-paint latency only; total time unchanged) |
+| **Confidence** | LOW |
+| **Risk** | MEDIUM |
 
-**Why it matters:** The current 2-chunk split means a 5,000-element document still hits the JS engine with a ~4 MB string in one `evaluateJavaScript` call. That call blocks the render thread. Spreading into 10-20 chunks at 16 ms intervals keeps the UI frame rate at 60 fps throughout load.
+**What it does:** Instead of reading the complete file, then parsing the complete file, then walking the AST: read and feed bytes to `cmark_parser_feed` incrementally, then call `cmark_parser_finish`, then walk. The parse overlaps with file read.
 
-**Implementation path:** Modify `MarkdownRenderer.chunkHTML` to split at every N-th block tag (not just the 50th). The JS side already supports arrays of chunks via the `i * 16` stagger pattern — no JS changes needed.
+**Reality check -- critical limitation:** `cmark_parser_feed` accepts incremental input, but `cmark_parser_finish` must be called before the AST is available. There is **no partial AST emission**. You cannot walk the AST until the entire file has been fed and finished. This means:
+- File read and parse can overlap (save ~1-2ms)
+- But first-chunk emission cannot happen until the full file is parsed
+- The savings are real but marginal for typical markdown files (<1MB) on NVMe SSDs
 
-**Confidence:** HIGH — the JS infrastructure already exists; this is purely a Swift-side chunking fix.
+**Where this would actually matter:** Files >10MB where read time becomes significant. But `mappedIfSafe` already makes reads nearly free (memory-mapped, no copy). The parse itself for a typical file is 3-5ms.
 
----
+**Honest savings estimate:** On M4 Max with NVMe, overlapping a ~1ms read with a ~4ms parse saves at most ~1ms. For larger files (10MB), read might take ~3ms, parse ~15ms, overlap saves ~3ms. Real-world savings: 1-3ms for typical files, 3-8ms for very large files.
 
-### 2. Memory-Mapped File Reading for Large Files
+**Architecture impact:** Moderate. Requires changing `renderFullPage(fileURL:template:)` to use `DispatchIO` or `FileHandle` for chunked reads feeding into `cmark_parser_feed`. The parse and read run on the same background thread (cmark is not thread-safe).
 
-**What:** Use `Data(contentsOf: url, options: .mappedIfSafe)` instead of `String(contentsOf:)`. The OS maps the file into the virtual address space without loading it into RAM upfront. Pages are faulted in on demand.
+**Dependencies:** Vendored swift-cmark (Feature 2). Streaming feed already uses the public `cmark_parser_feed` API, but AST walking for chunked output requires vendored access.
 
-**Why it matters:** A 10 MB markdown file loaded with `String(contentsOf:)` allocates 10 MB of RAM immediately plus the intermediate UTF-8 buffer. With `.mappedIfSafe`, only the pages actually touched by the cmark-gfm parser are loaded, and the OS can reclaim pages after the parser passes them.
-
-**Limits:** `.mappedIfSafe` only activates on fixed-volume files (not network drives, not removable media). Falls back to normal read automatically, so it is safe to use unconditionally.
-
-**Confidence:** HIGH — Apple documents this behavior explicitly. `Data(contentsOf:options:.mappedIfSafe)` is the recommended pattern in Apple's File Management guide.
-
----
-
-### 3. Mermaid JS via `<script src>` Tag Instead of `evaluateJavaScript`
-
-**What:** Add `<script src="mermaid.min.js"></script>` to `template.html` rather than injecting the 3 MB string through the Swift/JS bridge. WKWebView's `baseURL` is already set to `Bundle.main.resourceURL`, so the relative path resolves automatically.
-
-**Why it matters:** The `evaluateJavaScript` bridge serializes the string through IPC between the Swift process and the WKWebView renderer process. Passing 3 MB strings this way is expensive. Loading from a `<script src>` URL lets WebKit's resource loader handle it natively — no IPC serialization, and WebKit can cache the parsed bytecode across page loads.
-
-**Tradeoff:** The script loads eagerly on every page, even those without Mermaid. Mitigation: gate initialization (`window.initMermaid()`) on the presence of `.mermaid-placeholder` elements, which already happens.
-
-**Confidence:** HIGH — the baseURL mechanism is already in use for fonts. This is the same pattern.
+**Evidence:** cmark-gfm.h lines 597-608 document the streaming interface explicitly. But the limitation (no partial AST) means the savings are constrained.
 
 ---
 
-### 4. `callAsyncJavaScript` with Typed Arguments for Chunk Injection
+### 4. Zero-Copy C String to JS Bridge
 
-**What:** Replace the manual JS string builder in `injectRemainingChunks` with `callAsyncJavaScript(_:arguments:in:in:completionHandler:)`, passing the chunks array as a typed Swift `[String: Any]` argument dict. WebKit handles serialization and escaping correctly.
+| Attribute | Value |
+|-----------|-------|
+| **Complexity** | Very High |
+| **Est. savings** | 1-3ms (speculative) |
+| **Confidence** | LOW |
+| **Risk** | HIGH |
 
-**Why it matters:** The current manual escaper handles `\`, `` ` ``, and `$` but misses null bytes and Unicode surrogates in malformed markdown output. `callAsyncJavaScript` uses `JSValue` serialization — equivalent to `JSON.stringify` — which is correct for all Unicode.
+**What it does:** Eliminate the `String(cString: htmlCStr)` allocation in `parseMarkdownToHTML` (line 127 of MarkdownRenderer.swift) and the subsequent Swift String manipulations. Pass C buffer bytes more directly to WKWebView.
 
-**Performance benefit:** Minor improvement for normal files. Significant safety improvement for pathological inputs.
+**Reality check -- the IPC boundary dominates:**
+1. `String(cString: htmlCStr)` for 150KB HTML takes <0.1ms on M4 Max. This is not a bottleneck.
+2. Template concatenation (`prefix + firstChunk + suffix`) is another ~0.1ms. Also not a bottleneck.
+3. `loadHTMLString` serializes the string across IPC to the WebKit process regardless of how it was constructed in Swift. This IPC transfer takes 2-5ms for 150KB and is unavoidable.
 
-**Confidence:** HIGH — `callAsyncJavaScript` is available macOS 10.15+ and documented on Apple Developer.
+**Possible approaches:**
+- `String(bytesNoCopy:length:encoding:freeWhenDone:)` -- avoids one copy but still serializes across IPC
+- Write HTML to temp file, use `loadFileURL` -- trades string copy for file IO; may actually be slower for small content
+- `WKURLSchemeHandler` serving content from memory -- most promising but adds significant complexity (custom URL scheme, async handler, navigation delegate changes)
 
----
+**Why the savings are speculative:** The total cost of Swift String operations on the content is <0.5ms. The IPC boundary (loadHTMLString -> WebKit process) costs 2-5ms and is unavoidable with any approach. Zero-copy within Swift saves <0.5ms. Zero-copy across IPC is not possible with public WebKit APIs.
 
-### 5. WKWebView Warm-Up at App Launch
+**Architecture impact:** Very high for `WKURLSchemeHandler` approach. Moderate for `bytesNoCopy`. Either way, the savings don't justify the complexity.
 
-**What:** Allocate a `WKWebView` instance during `applicationDidFinishLaunching` and discard it after a short delay. The first WKWebView initialization triggers WebKit's process pool creation, which takes 30-80 ms. Subsequent WKWebView instances reuse the already-running WebKit process.
+**Dependencies:** Vendored swift-cmark (Feature 2) if the AST walker writes directly to a C buffer (avoiding Swift String entirely until the last moment).
 
-**Why it matters:** On a cold launch, the first `WKWebView(frame:configuration:)` call in `displayResult` happens after the file is parsed but before the window appears. That 30-80 ms is added to the user-visible latency. Warming the pool during app init moves this cost to the pre-launch phase.
-
-**Implementation path:** In `applicationDidFinishLaunching`, after `loadTemplate()`, create a throwaway `WKWebView` on the main thread. Schedule its removal with a 200 ms `DispatchQueue.main.asyncAfter`. This overlaps with the background parsing work.
-
-**Confidence:** MEDIUM — The WebViewWarmUper pattern is documented in open-source libraries and developer forum threads. The actual savings depend on OS WebKit process reuse behavior, which Apple does not fully document. The technique is low-risk (worst case: wasted 30-80 ms at launch that the user never sees).
-
----
-
-### 6. Correct `WKUserContentController` Weak Handler (Fix Retain Cycle)
-
-**What:** Replace `contentController.add(self, name: "firstPaint")` with a weak-proxy wrapper conforming to `WKScriptMessageHandler`. The proxy holds a weak reference to `WebContentView` and forwards messages.
-
-**Why it matters:** As documented in CONCERNS.md, the current code creates a retain cycle: `WKUserContentController` strongly retains its message handlers, so `WebContentView` (and its embedded `WKWebView`) is never deallocated when a window closes. Each closed window continues to hold ~30-40 MB of WebKit process memory. Opening and closing 10 documents leaks 300-400 MB.
-
-**Confidence:** HIGH — The retain cycle is fully documented by Apple and in community post-mortems. The weak-proxy pattern is the canonical fix.
+**Recommendation:** Do not pursue. The <0.5ms savings in Swift String operations are not worth the complexity. Focus optimization effort on reducing the WebKit pipeline time instead.
 
 ---
 
-### 7. Proper Window Frame Persistence
+### 5. Native NSTextView Rendering for Mermaid-Free Files
 
-**What:** Fix `loadSavedFrame()` so that `setFrameAutosaveName` actually restores position. The simplest path: delete `loadSavedFrame()` and the manual `setFrame` call, and rely on AppKit's automatic frame restoration that triggers when `setFrameAutosaveName` is set before `makeKeyAndOrderFront`.
+| Attribute | Value |
+|-----------|-------|
+| **Complexity** | Very High |
+| **Est. savings** | 60-100ms (bypasses WKWebView entirely) |
+| **Confidence** | LOW |
+| **Risk** | VERY HIGH |
 
-**Why it matters:** Users open the same file repeatedly. The window appearing at a remembered position is a baseline macOS app behavior — any deviation feels like a bug.
+**What it does:** For markdown files without mermaid diagrams, bypass WKWebView and render using NSTextView with NSAttributedString built from the cmark AST. NSTextView renders directly in the app process with zero IPC overhead.
 
-**Per-file key conflict:** The static `frameSaveKey = "MDViewerWindowFrame"` means multi-window position conflicts. Acceptable behavior for a viewer-not-editor: last-closed window wins. Document this. Do not build per-file hashing unless user feedback demands it.
+**Why the savings are real:** The ~80-120ms WKWebView pipeline (IPC + HTML parse + CSS layout + paint + firstPaint callback) is eliminated entirely. NSTextView + NSAttributedString layout for equivalent content takes ~5-15ms.
 
-**Confidence:** HIGH — AppKit frame autosave is well-documented behavior.
+**Critical problems that make this very high risk:**
 
----
+1. **Feature parity requires reimplementing template.html styling.** The current template has sophisticated CSS: Latin Modern Roman fonts at specific sizes, code block backgrounds with border-radius, GFM table styling with alternating row colors, task list checkboxes, blockquote left borders, horizontal rules, link styling. Every CSS rule must become NSAttributedString paragraph/character style attributes.
 
-### 8. Streaming / Chunked File Read for 10 MB+ Files
+2. **GFM tables in NSTextView are extremely painful.** NSTextView has no native table support. You need NSTextTable + NSTextTableBlock, which are poorly documented, don't support horizontal scrolling, and have rendering quirks. Tables are a GFM table-stakes feature.
 
-**What:** Read large markdown files in chunks using `FileHandle` or `DispatchIO` rather than loading the entire file at once. Feed chunks to `cmark_parser_feed` incrementally. This is the correct API — `cmark_parser_feed` is specifically designed for incremental input.
+3. **Code blocks need NSTextTab + custom background drawing.** NSTextView doesn't natively support background colors on paragraph ranges. You'd need custom drawing via `NSLayoutManager` (TextKit 1) or `NSTextLayoutFragment` (TextKit 2).
 
-**Why it matters:** `cmark_parser_feed` accepts bytes incrementally and `cmark_parser_finish` finalizes the parse. The parser already handles partial input correctly. This is the designed usage pattern from the cmark-gfm README.
+4. **Two rendering paths = permanent maintenance tax.** Every visual fix, every font change, every spacing adjustment must be applied in both template.html and the attributed string builder. Visual parity testing becomes a permanent requirement.
 
-**Complexity:** Medium-high. The chunked read must be coordinated with the background dispatch queue. Memory-mapped reading (Feature 2) is the simpler first step and handles most real-world files. True streaming matters for files >50 MB.
+5. **NSAttributedString's HTML import uses WebKit internally.** `NSAttributedString(html:)` calls into WebKit, so you cannot use it as a shortcut -- you must build the attributed string from the cmark AST manually.
 
-**Confidence:** HIGH for API availability (cmark_parser_feed is the public API). MEDIUM for whether most users need this vs. memory mapping alone.
+6. **PDF export and print would need a separate path.** Current PDF export uses `WKWebView.createPDF()`. NSTextView has its own printing infrastructure but produces different output. Two print paths.
 
----
+7. **Monospace toggle (Cmd+M) needs reimplementation.** Currently handled by a JS function in template.html. Would need attributed string font swapping.
 
-### 9. `suppressesIncrementalRendering = false` (Explicit, Not Default)
+**Architecture impact:** This is building a second rendering engine. New classes needed:
+- `ASTToAttributedStringRenderer` -- walks cmark AST, builds NSAttributedString
+- `NativeContentView` (NSTextView wrapper) -- parallel to WebContentView
+- Routing logic in AppDelegate to pick renderer based on mermaid presence
+- Shared protocol or abstraction for ContentView (both native and web variants)
 
-**What:** Verify `WKWebViewConfiguration.suppressesIncrementalRendering` is false (the default). If it is not explicitly set, confirm the default remains false in the target OS range (macOS 13+).
+**Dependencies:** Vendored swift-cmark with AST walking (Feature 2) is mandatory. You need direct AST access to build attributed strings.
 
-**Why it matters:** If this property were inadvertently set to `true`, WKWebView would buffer all content before painting, eliminating the first-chunk / firstPaint benefit entirely. Currently unset in code — behavior relies on an undocumented default.
-
-**Action:** Add `config.suppressesIncrementalRendering = false` explicitly in `WebContentView.init`. This costs nothing and makes the intent explicit.
-
-**Confidence:** HIGH — Property documented on Apple Developer. Default is false.
+**The honest question:** Is 40-70ms of savings worth building and maintaining a second rendering engine permanently? The answer depends on whether sub-100ms is achievable any other way.
 
 ---
 
 ## Anti-Features
 
-Features that hurt performance or create maintenance debt — explicitly avoid.
+Features to explicitly NOT build for this optimization milestone.
 
 | Anti-Feature | Why Avoid | What to Do Instead |
 |--------------|-----------|-------------------|
-| Loading entire large file into a single Swift String before parsing | Allocates full file size in RAM immediately, then allocates HTML output (2-3x file size total) | Memory-mapped `Data` + chunked `cmark_parser_feed` |
-| `evaluateJavaScript` with multi-megabyte string payloads | IPC serialization cost; JS engine blocks render thread during parse | N-chunk splitting + `callAsyncJavaScript` with typed args |
-| Injecting 3 MB Mermaid via JS bridge on every diagram window | 3 MB IPC round-trip per window; no bytecode caching | `<script src>` in template HTML |
-| Synchronous disk read on first Mermaid use (main thread) | Blocks main thread for ~5-20 ms; jank on first diagram | Pre-load on background thread at app start, or eliminate with `<script src>` approach |
-| Static `mermaidJSLoaded` and `mermaidJS` without `@MainActor` annotation | Latent data race if any future refactor moves the call off main thread | Annotate `WebContentView` with `@MainActor` or extract to thread-safe type |
-| `fatalError` on missing bundle resource | Crashes production with no user-visible error | Graceful error dialog with fallback inline template |
-| `developerExtrasEnabled` in production builds | Exposes full DOM and JS execution to end users | Gate with `#if DEBUG` |
-| Dark mode suppression via hardcoded CSS colors | White page in dark chrome window; visually broken | Not in scope per PROJECT.md, but a CSS `@media` block costs nothing |
-| Polling or timers for chunk injection timing | Adds unnecessary overhead; couples timing to wall clock | `requestAnimationFrame` in JS or the existing `setTimeout(fn, i * 16)` stagger |
-| Re-creating `WKWebView` instances instead of reusing | Each new instance may trigger WebKit process re-init | Warm-up pattern at launch; reuse where possible |
-| File watching / live reload | Out of scope per PROJECT.md; adds complexity and state | Documented exclusion — revisit only if core value changes |
+| JavaScript-side chunking | HTML must still fully transfer across IPC; moving chunk logic to JS doesn't reduce IPC cost | Keep chunking in Swift/C before WKWebView handoff |
+| Precompiled HTML caching | Adds disk IO, staleness checks; viewer should always show current file content | Always render fresh from source |
+| Multi-threaded cmark parsing | cmark uses internal state machines; not thread-safe. Would corrupt AST | Single-threaded parse; optimize the single pass |
+| SwiftUI migration | Adds launch overhead; provides no rendering speed benefit for this use case | Stay on AppKit + WKWebView |
+| Custom WKURLSchemeHandler for content serving | Adds async handler complexity, custom URL scheme; saves <2ms vs loadHTMLString | Stick with loadHTMLString |
+| Partial AST rendering (render before parse completes) | cmark has no partial AST API; cmark_parser_finish required before any traversal | Accept parse-then-render serial dependency |
+| WebAssembly markdown renderer in WKWebView | Slower than native C cmark; adds WASM compilation overhead | Use cmark C API directly from Swift |
 
 ---
 
 ## Feature Dependencies
 
 ```
-Memory-mapped file read (Feature 2)
-  → prerequisite for: streaming parse (Feature 8)
-  → prerequisite for: large file correctness (table stakes)
+WKWebView Warm Pool (1) -----> independent, no dependencies
 
-WKWebView warm-up (Feature 5)
-  → makes sub-100ms first paint achievable (table stakes)
-  → independent of all other features
-
-Fix retain cycle (Feature 6)
-  → prerequisite for: correct memory behavior (table stakes)
-  → independent of rendering pipeline changes
-
-N-chunk rendering (Feature 1)
-  → prerequisite for: smooth load of large files
-  → depends on: file being read (Feature 2 helps, not required)
-
-Mermaid via <script src> (Feature 3)
-  → independent — can ship without any other change
-  → subsumes: mermaid synchronous disk read fix (CONCERNS.md)
-
-callAsyncJavaScript (Feature 4)
-  → enhances: N-chunk rendering (Feature 1)
-  → independent of other features
+Vendored swift-cmark (2) ----> Streaming Parse Pipeline (3)
+                          \--> Zero-Copy Bridge (4) -- RECOMMENDED: do not pursue
+                           \-> Native NSTextView Rendering (5)
 ```
 
----
-
-## MVP for This Milestone
-
-The milestone goal is sub-100ms launch, 10 MB+ file support, reduced memory.
-
-**Priority 1 — Must have (blocks goals):**
-1. Fix retain cycle (Feature 6) — memory cannot be "reduced" while windows leak
-2. Mermaid via `<script src>` (Feature 3) — eliminates 3 MB bridge call, fixes main-thread disk read
-3. Memory-mapped file read (Feature 2) — enables 10 MB+ without OOM
-4. WKWebView warm-up (Feature 5) — the primary lever for sub-100ms first paint
-
-**Priority 2 — High value, lower risk:**
-5. N-chunk rendering (Feature 1) — needed for large files to load without jank
-6. `callAsyncJavaScript` with typed args (Feature 4) — correctness fix, minor performance gain
-7. Explicit `suppressesIncrementalRendering = false` (Feature 9) — one-line, zero risk
-
-**Priority 3 — Polish:**
-8. Window frame persistence (Feature 7) — correctness fix, improves UX
-9. Streaming file read (Feature 8) — only matters for 50 MB+ files; memory mapping handles most cases
-
-**Defer:**
-- Dark mode — explicitly out of scope (PROJECT.md)
-- File watching — explicitly out of scope (PROJECT.md)
-- Sandbox entitlements — separate infrastructure concern, not a performance feature
+**Critical path:** Vendored swift-cmark (Feature 2) is the foundation for 3 of the 4 remaining features. It must come first.
 
 ---
 
-## Observations from Competitive Landscape
+## MVP Recommendation
 
-**MacDown:** Uses a separate WebKit process for preview, decoupled from editor. Preview refreshes asynchronously. Native AppKit text views for editing keep keystroke response under 10 ms. Architecture insight: decoupling parse/render from the UI thread (already done in MDViewer) is the correct pattern.
+### Phase 1: Foundation + Quick Win
+1. **WKWebView warm pool** -- Low complexity, proven pattern, immediate savings for multi-file
+2. **Vendor swift-cmark as local SPM** -- No behavior change, just dependency management
 
-**Typora:** Electron-based; 300+ MB RAM at idle, seconds to launch. MDViewer's native approach already beats this category structurally.
+### Phase 2: Core Optimization
+3. **Direct-to-chunk AST walking** -- The main architectural win. Eliminates regex passes, reduces allocations, produces chunks directly from the AST.
 
-**QuickMD / ShowMeMyMD / OpenMark:** SwiftUI-based native apps. Launch fast because they compile to native Metal rendering paths. MDViewer's AppKit + WKWebView approach is heavier than pure SwiftUI + `Text`, but supports the HTML/CSS/JS rendering pipeline needed for Mermaid and LaTeX typography.
+### Phase 3: Evaluate and Decide
+4. **Measure results.** If under 150ms, streaming pipeline (Feature 3) adds marginal value. If still over 150ms, investigate where time is spent in WebKit pipeline.
 
-**Apple Preview (PDF):** Uses on-demand page rendering — only renders pages visible in the viewport. Keeps decoded bitmaps in RAM for instant scroll. For MDViewer, the analogous technique is N-chunk injection: render only what fits on screen, inject remaining content as the user scrolls.
+### Defer
+- **Zero-copy C string to JS bridge** (Feature 4) -- <0.5ms savings for very high complexity. Do not build.
+- **Native NSTextView rendering** (Feature 5) -- Only pursue if sub-100ms is confirmed impossible with WKWebView and the project decides the maintenance cost is acceptable.
 
-**TextKit 2 (code editors on macOS 13+):** `NSTextViewportLayoutController` only lays out text fragments visible in the viewport. For a markdown viewer using WKWebView, the equivalent is browser-side virtual DOM — not directly applicable, but the principle (only render what is visible) should inform how chunks are sized relative to screen height.
+---
+
+## Realistic Performance Budget
+
+| Scenario | First File | 2nd+ File | Notes |
+|----------|-----------|-----------|-------|
+| **Current baseline** | 184.50ms | ~220ms | Measured; 2nd file has no pre-warm |
+| + Warm pool | 184.50ms | ~184ms | Pool covers 2nd+ files |
+| + AST walking (no regex) | ~170-175ms | ~170-175ms | Saves ~10-15ms from eliminating regex passes and intermediate string |
+| + Streaming pipeline | ~168-173ms | ~168-173ms | Marginal; 2-5ms overlap savings |
+| **Realistic achievable (WKWebView path)** | **~165-175ms** | **~165-175ms** | |
+| + NSTextView path (mermaid-free) | **~70-100ms** | **~70-100ms** | Bypasses WebKit entirely |
+
+### Honest Assessment
+
+**Sub-100ms is likely not achievable while using WKWebView for rendering.** The WebKit pipeline (loadHTMLString -> HTML parse -> CSS layout -> paint -> IPC callback) takes ~80-120ms on its own, regardless of how fast the content is generated. The Swift-side pipeline is already fast (~10-15ms). Optimizing it further yields diminishing returns.
+
+**To reach sub-100ms, one of these must happen:**
+1. **NSTextView for mermaid-free files** -- proven feasible but very high maintenance cost
+2. **Apple improves WKWebView first-load performance** -- not in our control
+3. **Revise the target** -- sub-150ms is realistic and still "instant" to human perception
+
+**Recommended target revision:** Sub-150ms all files with WKWebView (achievable with Features 1-3). Sub-100ms deferred to future milestone if NSTextView path is approved.
 
 ---
 
 ## Sources
 
-- Apple Developer Documentation: WKWebViewConfiguration, WKWebView.callAsyncJavaScript, Data(contentsOf:options:), NSTextViewportLayoutController — [developer.apple.com](https://developer.apple.com/documentation/webkit/wkwebviewconfiguration)
-- Apple File Management Guide: Mapping Files Into Memory — [developer.apple.com/library/archive](https://developer.apple.com/library/archive/documentation/FileManagement/Conceptual/FileSystemAdvancedPT/MappingFilesIntoMemory/MappingFilesIntoMemory.html)
-- WKWebView WarmUper pattern — [github.com/bernikovich/WebViewWarmUper](https://github.com/bernikovich/WebViewWarmUper)
-- WKWebView memory leaks analysis — [embrace.io/blog/wkwebview-memory-leaks](https://embrace.io/blog/wkwebview-memory-leaks/)
-- ChimeHQ TextViewBenchmark (TextKit 2 viewport layout) — [github.com/ChimeHQ/TextViewBenchmark](https://github.com/ChimeHQ/TextViewBenchmark)
-- Swift Forums: Memory-mapped file discussion — [forums.swift.org](https://forums.swift.org/t/what-s-the-recommended-way-to-memory-map-a-file/19113)
-- WKWebView callAsyncJavaScript: iOS 14 new features — [nemecek.be/blog/32](https://nemecek.be/blog/32/ios-14-what-is-new-for-wkwebview)
-- QLMarkdown (cmark-gfm Quick Look reference) — [github.com/sbarex/QLMarkdown](https://github.com/sbarex/QLMarkdown)
-- Apple WWDC 2019: Optimizing App Launch — [developer.apple.com/videos/play/wwdc2019/423](https://developer.apple.com/videos/play/wwdc2019/423/)
-- Apple WWDC 2021: Meet TextKit 2 — [developer.apple.com/videos/play/wwdc2021/10061](https://developer.apple.com/videos/play/wwdc2021/10061/)
-- cmark-gfm repository — [github.com/github/cmark-gfm](https://github.com/github/cmark-gfm)
+- cmark-gfm.h iterator API documentation -- read directly from `/Users/mit/Library/Developer/Xcode/DerivedData/MDViewer-*/SourcePackages/checkouts/swift-cmark/src/include/cmark-gfm.h` (HIGH confidence)
+- cmark html.c `S_render_node` and `cmark_render_html_with_mem` -- read directly from source (HIGH confidence)
+- cmark render.h `cmark_html_renderer` struct -- read directly from source (HIGH confidence)
+- MDViewer source: `MarkdownRenderer.swift`, `WebContentView.swift`, `AppDelegate.swift`, `MarkdownWindow.swift` -- read directly (HIGH confidence)
+- [WebViewWarmUper](https://github.com/bernikovich/WebViewWarmUper) -- WKWebView warm pool pattern
+- [Embrace: WKWebView Memory](https://embrace.io/blog/wkwebview-memory-leaks/) -- memory cost per instance
+- [Apple Developer Forums: WKWebView Loading](https://developer.apple.com/forums/thread/725330) -- loadHTMLString performance
+- [Eclectic Light: SwiftUI text views](https://eclecticlight.co/2024/05/07/swiftui-on-macos-text-rich-text-markdown-html-and-pdf-views/) -- NSTextView vs WKWebView
+- [Benchmarking Markdown Parsers](https://blog.services.aero2x.eu/benchmarking-popular-markdown-parsers-on-ios.html) -- NSAttributedString performance
+- [Incremental Markdown Parsing](https://dev.to/kingshuaishuai/eliminate-redundant-markdown-parsing-typically-2-10x-faster-ai-streaming-4k94) -- streaming parse analysis
+- [commonmark/cmark](https://github.com/commonmark/cmark) -- cmark architecture reference
+- [swiftlang/swift-cmark](https://github.com/swiftlang/swift-cmark) -- Apple's fork (used by MDViewer)
