@@ -10,7 +10,7 @@
 - [ ] **CMARK-01**: App uses a vendored copy of swift-cmark built as part of the Xcode project (no SPM dependency)
 - [ ] **CMARK-02**: Vendored cmark exposes a chunked HTML callback API that emits ≤64KB blocks at top-level AST boundaries
 - [ ] **CMARK-03**: Mermaid code blocks are detected in the C renderer (info string check) and emitted as placeholder divs
-- [ ] **CMARK-04**: MarkdownRenderer uses the chunked API directly, eliminating regex-based HTML chunking and mermaid regex scanning
+- [ ] **CMARK-04**: MarkdownRenderer uses the chunked API directly, eliminating regex-based HTML chunking and mermaid regex scan
 - [ ] **CMARK-05**: Cached cmark extension list reused across renders (no per-render cmark_find_syntax_extension lookups)
 - [ ] **CMARK-06**: Entity encoding uses append(contentsOf:) with correct capacity reservation
 
@@ -75,30 +75,30 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CMARK-01 | — | Pending |
-| CMARK-02 | — | Pending |
-| CMARK-03 | — | Pending |
-| CMARK-04 | — | Pending |
-| CMARK-05 | — | Pending |
-| CMARK-06 | — | Pending |
-| POOL-01 | — | Pending |
-| POOL-02 | — | Pending |
-| POOL-03 | — | Pending |
-| STRM-01 | — | Pending |
-| STRM-02 | — | Pending |
-| NATV-01 | — | Pending |
-| NATV-02 | — | Pending |
-| NATV-03 | — | Pending |
-| NATV-04 | — | Pending |
-| PERF-01 | — | Pending |
-| PERF-02 | — | Pending |
-| PERF-03 | — | Pending |
+| CMARK-01 | Phase 6 | Pending |
+| CMARK-02 | Phase 6 | Pending |
+| CMARK-03 | Phase 6 | Pending |
+| CMARK-04 | Phase 6 | Pending |
+| CMARK-05 | Phase 6 | Pending |
+| CMARK-06 | Phase 6 | Pending |
+| POOL-01 | Phase 7 | Pending |
+| POOL-02 | Phase 7 | Pending |
+| POOL-03 | Phase 7 | Pending |
+| STRM-01 | Phase 8 | Pending |
+| STRM-02 | Phase 8 | Pending |
+| NATV-01 | Phase 9 | Pending |
+| NATV-02 | Phase 9 | Pending |
+| NATV-03 | Phase 9 | Pending |
+| NATV-04 | Phase 9 | Pending |
+| PERF-01 | Phase 8 | Pending |
+| PERF-02 | Phase 9 | Pending |
+| PERF-03 | Phase 7 | Pending |
 
 **Coverage:**
 - v2.1 requirements: 18 total
-- Mapped to phases: 0
-- Unmapped: 18 ⚠️
+- Mapped to phases: 18
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-16*
-*Last updated: 2026-04-16 after initial definition*
+*Last updated: 2026-04-16 after roadmap creation*
