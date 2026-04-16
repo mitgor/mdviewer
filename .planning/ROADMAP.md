@@ -107,7 +107,7 @@ Plans:
 **Plans**: 3 plans
 Plans:
 - [x] 06-01-PLAN.md -- Vendor cmark-gfm sources and configure static library build targets
-- [ ] 06-02-PLAN.md -- Add chunked HTML callback API and mermaid detection to vendored html.c
+- [x] 06-02-PLAN.md -- Add chunked HTML callback API and mermaid detection to vendored html.c
 - [ ] 06-03-PLAN.md -- Rewrite MarkdownRenderer to use chunked C API with cached extensions
 
 ### Phase 7: WKWebView Pool
