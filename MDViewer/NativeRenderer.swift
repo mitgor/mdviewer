@@ -377,6 +377,9 @@ final class NativeRenderer {
                             // Unknown extension -- push current style to maintain stack balance
                             styleStack.append(currentStyle)
                         }
+                    } else {
+                        // Unknown core node -- push no-op style so EXIT can always pop
+                        styleStack.append(currentStyle)
                     }
                 }
 
@@ -428,11 +431,9 @@ final class NativeRenderer {
                     break
 
                 default:
-                    // Extension types: pop the style we pushed on enter
-                    if typeString != nil {
-                        if styleStack.count > 1 {
-                            styleStack.removeLast()
-                        }
+                    // Pop the style pushed on enter (core or extension)
+                    if styleStack.count > 1 {
+                        styleStack.removeLast()
                     }
                 }
             }
