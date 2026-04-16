@@ -305,19 +305,19 @@ No new signpost instrumentation needed — the existing `open-to-paint` interval
 | A2 | Pool -> View navigation delegate doesn't create a retain cycle | Pitfall 2 | LOW — standard delegate pattern; WKWebView.navigationDelegate is weak by convention but should verify |
 | A3 | loadHTMLString on a just-created WKWebView works even if WebContent process hasn't fully spun up | Pitfall 4 | MEDIUM — if wrong, pool would need a "ready" callback before marking view available |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Pool capacity: is 2 the right number?**
+1. **Pool capacity: is 2 the right number?** RESOLVED: Configurable capacity, default 2 per POOL-01 spec.
    - What we know: Requirements specify 2 (POOL-01). WKWebView uses ~20-30MB per instance.
    - What's unclear: Whether 2 is optimal or if 1 would suffice (since replenishment is fast).
    - Recommendation: Implement with configurable capacity, default to 2 per POOL-01.
 
-2. **Should in-use views (already in windows) also get crash recovery?**
+2. **Should in-use views (already in windows) also get crash recovery?** RESOLVED: POOL-03 scope is pooled (idle) views only; in-use view crash recovery is out of scope.
    - What we know: POOL-03 says "Pool handles WebContent process termination (recreates crashed views)." This implies pool-managed views.
    - What's unclear: Whether windows with active content should also show a recovery UI.
    - Recommendation: Implement crash recovery for pooled (idle) views as required. For in-use views, show an error alert (stretch goal, not required by POOL-03).
 
-3. **Should the pool pre-load `about:blank` or leave views completely fresh?**
+3. **Should the pool pre-load `about:blank` or leave views completely fresh?** RESOLVED: Start without blank page load; measure; add if PERF-03 unmet.
    - What we know: The current pre-warm creates `WebContentView(frame: .zero)` without loading any content. WebViewWarmUper pattern suggests loading a blank page to fully initialize the WebContent process.
    - What's unclear: Whether loading `about:blank` provides meaningful speedup over just creating the view.
    - Recommendation: Start with the current approach (no blank page load). Measure. If PERF-03 is not met, add `about:blank` pre-load.
