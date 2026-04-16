@@ -420,19 +420,19 @@ func assembleFirstPage(template: SplitTemplate, chunk: String) -> String {
 | A2 | WKWebView `loadHTMLString` takes 30-50ms, making streaming overlap worthwhile for large files | Pitfall 5 | If loadHTMLString is faster, streaming benefit is negligible (but no regression) |
 | A3 | Concurrent renders of the same MarkdownRenderer are possible when multiple files are opened simultaneously | Pitfall 4 | If AppDelegate serializes opens, buffer can safely live on the renderer |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Thread safety of shared buffer**
+1. **Thread safety of shared buffer** RESOLVED: Per-call local buffer with removeAll(keepingCapacity: true); no locks per research recommendation.
    - What we know: AppDelegate dispatches to `.global(qos: .userInitiated)` which is a concurrent queue. Multiple drag-and-drop files could trigger concurrent renders.
    - What's unclear: Whether to make the buffer per-render-call or serialize renders.
    - Recommendation: Use a per-call buffer with `removeAll(keepingCapacity: true)` semantics via a local array. The allocation cost is trivial for a ~200KB buffer on a background thread. Buffer reuse across calls on the same thread can be achieved by making MarkdownRenderer use a serial queue internally.
 
-2. **WebContentView API for deferred chunk delivery**
+2. **WebContentView API for deferred chunk delivery** RESOLVED: Add setRemainingChunks(_:hasMermaid:) method with firstPaint interlock.
    - What we know: Current `loadContent(page:remainingChunks:hasMermaid:)` expects all data at once.
    - What's unclear: Whether to split into two methods or add a `setRemainingChunks` method.
    - Recommendation: Add a `setRemainingChunks(_:hasMermaid:)` method. If chunks arrive before first paint, they're stored. If first paint already fired, inject immediately.
 
-3. **Warm launch measurement methodology for 150ms target**
+3. **Warm launch measurement methodology for 150ms target** RESOLVED: OSSignposter intervals measure streaming pipeline stages; profile before/after with Instruments.
    - What we know: Current warm launch is 184.50ms on M4 Max. OSSignposter is already instrumented.
    - What's unclear: Exact contribution of the streaming overlap to latency reduction.
    - Recommendation: Profile with Instruments before and after. The 34ms gap (184 -> 150) should be achievable by overlapping parse (~10ms) with WKWebView load (~30-50ms), especially combined with the pool from Phase 7.
