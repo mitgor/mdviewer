@@ -131,7 +131,10 @@ Plans:
   1. For a large file, the first HTML chunk is delivered to WKWebView before all chunks have been produced
   2. Template concatenation does not create new String allocations per render (buffer reuse verified via Instruments allocations trace)
   3. Warm launch to first visible content is under 150ms for the WKWebView path (measured via OSSignposter)
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 08-01-PLAN.md -- Streaming render API with buffer-reuse template assembly
+- [ ] 08-02-PLAN.md -- Wire streaming pipeline into AppDelegate and WebContentView
 
 ### Phase 9: Native Text Rendering
 **Goal**: Simple markdown files (no mermaid, no GFM tables) render via NSTextView, bypassing WKWebView for dramatically faster display
@@ -143,7 +146,10 @@ Plans:
   3. Native-rendered text uses Latin Modern Roman typography matching the WKWebView path visually
   4. User can toggle between native and web rendering via menu item if visual differences arise
   5. Warm launch to first visible content is under 100ms for the NSTextView path (measured via OSSignposter)
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 08-01-PLAN.md -- Streaming render API with buffer-reuse template assembly
+- [ ] 08-02-PLAN.md -- Wire streaming pipeline into AppDelegate and WebContentView
 **UI hint**: yes
 
 ## Progress
