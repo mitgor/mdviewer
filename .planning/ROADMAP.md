@@ -120,7 +120,7 @@ Plans:
   3. If a WebContent process crashes, the pool discards the dead view and creates a replacement
 **Plans**: 2 plans
 Plans:
-- [ ] 07-01-PLAN.md -- Create WebViewPool class and add pool support methods to WebContentView
+- [x] 07-01-PLAN.md -- Create WebViewPool class and add pool support methods to WebContentView
 - [ ] 07-02-PLAN.md -- Integrate pool into AppDelegate and add unit tests
 
 ### Phase 8: Streaming Pipeline
