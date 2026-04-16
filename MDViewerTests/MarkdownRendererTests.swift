@@ -150,4 +150,25 @@ final class MarkdownRendererTests: XCTestCase {
                 "Chunk \(index) byte size \(byteCount) should be roughly <=64KB")
         }
     }
+
+    func testExtensionCachingDoesNotCrash() {
+        // Verify that creating multiple renderers and rendering repeatedly
+        // does not crash due to extension caching issues
+        let renderer1 = MarkdownRenderer()
+        let renderer2 = MarkdownRenderer()
+        for _ in 0..<10 {
+            let _ = renderer1.render(markdown: "| A | B |\n|---|---|\n| 1 | 2 |")
+            let _ = renderer2.render(markdown: "~~strike~~ and https://example.com")
+        }
+        // If we get here without crashing, extension caching works correctly
+    }
+
+    func testChunkedAPIProducesNonEmptyChunks() {
+        let renderer = MarkdownRenderer()
+        let (chunks, _) = renderer.render(markdown: "# Title\n\nParagraph text")
+        XCTAssertFalse(chunks.isEmpty)
+        for (index, chunk) in chunks.enumerated() {
+            XCTAssertFalse(chunk.isEmpty, "Chunk \(index) should not be empty")
+        }
+    }
 }
