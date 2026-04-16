@@ -48,6 +48,7 @@
 		575853CAACDAC4DD41C9646C /* strikethrough.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = EDEF7D8A424AF0004BC7D2BD /* strikethrough.h */; };
 		577EA24F2229C61F0C5DE6DA /* map.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = F45EBA55476A3707DBB83160 /* map.h */; };
 		5B05F106C66F258661A5484C /* CMakeLists.txt in Resources */ = {isa = PBXBuildFile; fileRef = 569797CC2496E6353EA773A9 /* CMakeLists.txt */; };
+		5C346424520D84551BED49D2 /* NativeRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5DA437ACC24DABEFF581D49 /* NativeRenderer.swift */; };
 		6210DE569ABA9EA3309C1B4F /* houdini_html_e.c in Sources */ = {isa = PBXBuildFile; fileRef = AFA7FC79F4063BF333D15247 /* houdini_html_e.c */; };
 		634F50B131840B59AF7EBEFA /* module.modulemap in CopyFiles */ = {isa = PBXBuildFile; fileRef = E0D1B042A42F3657CBCE0C4C /* module.modulemap */; };
 		6A2DB12327679A9C20D34BFC /* plugin.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 800FC4BFD38906831002052F /* plugin.h */; };
@@ -62,6 +63,7 @@
 		8AAAE256B8F72DABE3FAC475 /* core-extensions.c in Sources */ = {isa = PBXBuildFile; fileRef = 5B1B8DCBF9492BBFC65573E8 /* core-extensions.c */; };
 		8BE09FAD2164F919AFC40D3D /* cmark_ctype.c in Sources */ = {isa = PBXBuildFile; fileRef = E679D22953B5ACF0BC7DA4E8 /* cmark_ctype.c */; };
 		92ECA667416814B84CE24C73 /* node.c in Sources */ = {isa = PBXBuildFile; fileRef = E6BC97C78959C8298778FE4B /* node.c */; };
+		92EEB09FA9FC26DCB3527EF0 /* lmmono10-regular.otf in Resources */ = {isa = PBXBuildFile; fileRef = 15279E3385AB50AD0192F26F /* lmmono10-regular.otf */; };
 		96C17B7323B35A481A651433 /* table.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = F2C06A6FCED4EAE7C6D2F283 /* table.h */; };
 		98D4F3F33023B407AC3F3A4E /* syntax_extension.c in Sources */ = {isa = PBXBuildFile; fileRef = 5909833F9D0BE2C58796D152 /* syntax_extension.c */; };
 		A2E8911647FC9237916EE95B /* map.c in Sources */ = {isa = PBXBuildFile; fileRef = 83C830DD33E095FFEFC93113 /* map.c */; };
@@ -71,6 +73,7 @@
 		B0D02BC50B6C5605480BB1A2 /* MarkdownRendererTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0272F7073B9F5CD226C6E09D /* MarkdownRendererTests.swift */; };
 		B1015E15769F3D1CD58359BA /* CMakeLists.txt in Resources */ = {isa = PBXBuildFile; fileRef = CC4CD349CC5CAF7CE359B358 /* CMakeLists.txt */; };
 		B80C049156BC9B3DD4102496 /* ext_scanners.c in Sources */ = {isa = PBXBuildFile; fileRef = 44827793B4ABD0BAEA6167CD /* ext_scanners.c */; };
+		BBD116692EB373F556CA1291 /* lmroman10-bold.otf in Resources */ = {isa = PBXBuildFile; fileRef = 08FEDEFCA7760B3783A2AB2B /* lmroman10-bold.otf */; };
 		C132C89618EB67C1E87ABEA5 /* cmark-gfm-core-extensions.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 7E095EEFDEA2BD1C2A9E3839 /* cmark-gfm-core-extensions.h */; };
 		C592B5A55390B5133395E951 /* syntax_extension.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = A2590F186300F99FD65BA27A /* syntax_extension.h */; };
 		C74D71EFA9F3755A95AE1D8E /* inlines.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 79C4B55644D2C3FBF14A0522 /* inlines.h */; };
@@ -87,6 +90,7 @@
 		E6AE38D66DF26C51CF578682 /* latex.c in Sources */ = {isa = PBXBuildFile; fileRef = BE204F14A829991E16AE8910 /* latex.c */; };
 		E7F6D3E4113D36C51ADCBDD8 /* html.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DDA5BECA16DF1A41F2A47945 /* html.h */; };
 		E8475D5C72EBA8BCD97EE3B0 /* cmark-gfm_config.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 690C1E385EDE8FE758C02F32 /* cmark-gfm_config.h */; };
+		E86027FFBC1A578D7DA07567 /* lmroman10-regular.otf in Resources */ = {isa = PBXBuildFile; fileRef = 0679EA0EF53473BB1C9A7F2B /* lmroman10-regular.otf */; };
 		E98F6E0C700EADF10B5194E2 /* footnotes.c in Sources */ = {isa = PBXBuildFile; fileRef = BD6C9F64C597D26D1F1B0A63 /* footnotes.c */; };
 		E9C1EE2488BF851D98525C9A /* parser.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 119105B9B8917F3C17FF51CB /* parser.h */; };
 		EE9FA112BE596AF853ABDE89 /* tagfilter.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = BCDD306D43260B3A8AC21F6F /* tagfilter.h */; };
@@ -189,11 +193,14 @@
 		01D95AA0154202651DDE5466 /* autolink.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = autolink.h; sourceTree = "<group>"; };
 		0272F7073B9F5CD226C6E09D /* MarkdownRendererTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownRendererTests.swift; sourceTree = "<group>"; };
 		0645364F7F24A2D80B484A82 /* entities.inc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.pascal; path = entities.inc; sourceTree = "<group>"; };
+		0679EA0EF53473BB1C9A7F2B /* lmroman10-regular.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "lmroman10-regular.otf"; sourceTree = "<group>"; };
 		0762C5A031EFEFE050C0AE41 /* arena.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = arena.c; sourceTree = "<group>"; };
+		08FEDEFCA7760B3783A2AB2B /* lmroman10-bold.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "lmroman10-bold.otf"; sourceTree = "<group>"; };
 		0953653BB0D1F324893C03C4 /* ext_scanners.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ext_scanners.h; sourceTree = "<group>"; };
 		119105B9B8917F3C17FF51CB /* parser.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = parser.h; sourceTree = "<group>"; };
 		12A2FA1D55D58A86D56FE54C /* WebContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebContentView.swift; sourceTree = "<group>"; };
 		12B65DE29A00743FE763ADF7 /* mermaid.min.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = mermaid.min.js; sourceTree = "<group>"; };
+		15279E3385AB50AD0192F26F /* lmmono10-regular.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "lmmono10-regular.otf"; sourceTree = "<group>"; };
 		15338C6C0AA8B9E06156B705 /* libcmark-gfm.pc.in */ = {isa = PBXFileReference; path = "libcmark-gfm.pc.in"; sourceTree = "<group>"; };
 		15BEFC1F83C7341D3970B4FA /* registry.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = registry.c; sourceTree = "<group>"; };
 		1966ECECAAAD4198ECD170A7 /* PDFPrintView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFPrintView.swift; sourceTree = "<group>"; };
@@ -246,6 +253,7 @@
 		A1E7212F1DDD8320318FDE1A /* references.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = references.c; sourceTree = "<group>"; };
 		A2590F186300F99FD65BA27A /* syntax_extension.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = syntax_extension.h; sourceTree = "<group>"; };
 		A3E1FE7ED1D027247B367AEE /* html.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = html.c; sourceTree = "<group>"; };
+		A5DA437ACC24DABEFF581D49 /* NativeRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeRenderer.swift; sourceTree = "<group>"; };
 		A8416F124345CD28D11536DF /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		A9735715AEEF674CD09CF3AA /* scanners.re */ = {isa = PBXFileReference; path = scanners.re; sourceTree = "<group>"; };
 		AA7318485AA6C130EEF59D7F /* ext_scanners.re */ = {isa = PBXFileReference; path = ext_scanners.re; sourceTree = "<group>"; };
@@ -413,8 +421,11 @@
 		B4D66FC165A006964F9E98BA /* fonts */ = {
 			isa = PBXGroup;
 			children = (
+				15279E3385AB50AD0192F26F /* lmmono10-regular.otf */,
 				41FB994237F57167AA74856D /* lmmono10-regular.woff2 */,
+				08FEDEFCA7760B3783A2AB2B /* lmroman10-bold.otf */,
 				413A4943F775F786D86100E6 /* lmroman10-bold.woff2 */,
+				0679EA0EF53473BB1C9A7F2B /* lmroman10-regular.otf */,
 				2E4B1912CD2A98FD0E31BBBD /* lmroman10-regular.woff2 */,
 			);
 			path = fonts;
@@ -428,6 +439,7 @@
 				A8416F124345CD28D11536DF /* main.swift */,
 				3D8C8063C77E20F0BC3241C6 /* MarkdownRenderer.swift */,
 				3D77E35CF5D4FF0D355944C7 /* MarkdownWindow.swift */,
+				A5DA437ACC24DABEFF581D49 /* NativeRenderer.swift */,
 				1966ECECAAAD4198ECD170A7 /* PDFPrintView.swift */,
 				12A2FA1D55D58A86D56FE54C /* WebContentView.swift */,
 				5C41D7E0E4AB0828232D9127 /* WebViewPool.swift */,
@@ -609,8 +621,11 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				92EEB09FA9FC26DCB3527EF0 /* lmmono10-regular.otf in Resources */,
 				73AA445EED9CB44C0C90BE74 /* lmmono10-regular.woff2 in Resources */,
+				BBD116692EB373F556CA1291 /* lmroman10-bold.otf in Resources */,
 				32D88CB2867371BA7FFE99AC /* lmroman10-bold.woff2 in Resources */,
+				E86027FFBC1A578D7DA07567 /* lmroman10-regular.otf in Resources */,
 				1177F68A56BEBE99F5E021CF /* lmroman10-regular.woff2 in Resources */,
 				110F2A31A06251C4B8972059 /* mermaid.min.js in Resources */,
 				1806ABC2B11B0080D4E4B65D /* template.html in Resources */,
@@ -627,6 +642,7 @@
 				0A48E6DEF5C82CA973975264 /* AppDelegate.swift in Sources */,
 				520181ED43CADA1D3AAF889F /* MarkdownRenderer.swift in Sources */,
 				43E471432CED94DEC9D5EFB5 /* MarkdownWindow.swift in Sources */,
+				5C346424520D84551BED49D2 /* NativeRenderer.swift in Sources */,
 				29ED46390C47B842EB878313 /* PDFPrintView.swift in Sources */,
 				FE8BA6FE29B7B5A44C408F94 /* WebContentView.swift in Sources */,
 				A4DA6E20CFA295E8B1AB4E46 /* WebViewPool.swift in Sources */,
