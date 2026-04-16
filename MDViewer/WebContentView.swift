@@ -94,6 +94,20 @@ final class WebContentView: NSView, WKScriptMessageHandler {
         }
     }
 
+    // MARK: - Pool Support
+
+    /// Allow external crash-detection delegate for pooled views.
+    /// Pool sets itself as delegate for idle views; clears on dequeue.
+    func setNavigationDelegate(_ delegate: WKNavigationDelegate?) {
+        webView.navigationDelegate = delegate
+    }
+
+    /// Identity check: does this WebContentView own the given WKWebView?
+    /// Used by WebViewPool to match a crashed WKWebView back to its owner.
+    func ownsWebView(_ candidate: WKWebView) -> Bool {
+        return webView === candidate
+    }
+
     deinit {
         webView.configuration.userContentController.removeScriptMessageHandler(forName: "firstPaint")
         #if DEBUG
