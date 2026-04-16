@@ -15,6 +15,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
     private var openedViaDelegate = false
     private var openToPaintStates: [ObjectIdentifier: OSSignpostIntervalState] = [:]
     private var hasCompletedFirstLaunchPaint = false
+    private var pendingFileOpens = 0
     private let webViewPool = WebViewPool(capacity: 2)
 
     // MARK: - App Lifecycle
@@ -49,6 +50,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         // During test hosting, don't terminate when no windows are open.
         if NSClassFromString("XCTestCase") != nil { return false }
+        // Don't terminate while files are being rendered on background threads
+        if pendingFileOpens > 0 { return false }
         return true
     }
 
@@ -75,15 +78,20 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
     @objc func openDocument(_ sender: Any?) {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [
+            UTType("net.daringfireball.markdown"),
             UTType(filenameExtension: "md"),
-            UTType(filenameExtension: "markdown")
+            UTType(filenameExtension: "markdown"),
+            UTType.plainText
         ].compactMap { $0 }
         panel.allowsMultipleSelection = true
 
+        pendingFileOpens += 1 // Prevent termination while panel is open
         panel.begin { [weak self] response in
+            guard let self = self else { return }
+            self.pendingFileOpens -= 1
             guard response == .OK else { return }
             for url in panel.urls {
-                self?.openFile(url)
+                self.openFile(url)
             }
         }
     }
@@ -139,12 +147,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
     private func openFile(_ url: URL) {
         guard let tmpl = template else { return }
         let paintState = appSignposter.beginInterval("open-to-paint")
+        pendingFileOpens += 1
 
         // Parse markdown on background thread — keeps UI responsive for large files
         let renderer = self.renderer
         DispatchQueue.global(qos: .userInitiated).async {
             guard let result = renderer.renderFullPage(fileURL: url, template: tmpl) else {
-                DispatchQueue.main.async {
+                DispatchQueue.main.async { [weak self] in
+                    self?.pendingFileOpens -= 1
                     appSignposter.endInterval("open-to-paint", paintState)
                     let alert = NSAlert()
                     alert.messageText = "Cannot Open File"
@@ -156,6 +166,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
             }
 
             DispatchQueue.main.async { [weak self] in
+                self?.pendingFileOpens -= 1
                 self?.displayResult(result, for: url, paintState: paintState)
             }
         }
