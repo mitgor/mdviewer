@@ -3,7 +3,7 @@ import WebKit
 
 /// Maintains a pool of pre-warmed WebContentView instances for instant file opens.
 /// All access is main-thread-only (WKWebView requirement). No concurrency primitives needed.
-final class WebViewPool {
+final class WebViewPool: NSObject {
     private var pool: [WebContentView] = []
     private let capacity: Int
 
