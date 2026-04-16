@@ -1,7 +1,6 @@
 import Foundation
 import os
 import cmark_gfm
-import cmark_gfm_extensions
 
 struct RenderResult {
     let page: String

@@ -4,11 +4,41 @@ settings:
     MACOSX_DEPLOYMENT_TARGET: "13.0"
     SWIFT_VERSION: "5.9"
     GENERATE_INFOPLIST_FILE: NO
-packages:
-  swift-cmark:
-    url: https://github.com/apple/swift-cmark.git
-    branch: gfm
 targets:
+  cmark-gfm:
+    type: library.static
+    platform: macOS
+    sources:
+      - Vendor/cmark-gfm/src
+    settings:
+      HEADER_SEARCH_PATHS:
+        - $(SRCROOT)/Vendor/cmark-gfm/src/include
+        - $(SRCROOT)/Vendor/cmark-gfm/extensions/include
+      MODULEMAP_FILE: $(SRCROOT)/Vendor/cmark-gfm/src/include/module.modulemap
+      GCC_C_LANGUAGE_STANDARD: c99
+      CLANG_ENABLE_MODULES: NO
+    excludes:
+      - "*.re"
+      - "*.in"
+      - "*.pc.in"
+      - CMakeLists.txt
+  cmark-gfm-extensions:
+    type: library.static
+    platform: macOS
+    sources:
+      - Vendor/cmark-gfm/extensions
+    settings:
+      HEADER_SEARCH_PATHS:
+        - $(SRCROOT)/Vendor/cmark-gfm/src/include
+        - $(SRCROOT)/Vendor/cmark-gfm/extensions/include
+      MODULEMAP_FILE: $(SRCROOT)/Vendor/cmark-gfm/src/include/module.modulemap
+      GCC_C_LANGUAGE_STANDARD: c99
+      CLANG_ENABLE_MODULES: NO
+    dependencies:
+      - target: cmark-gfm
+    excludes:
+      - "*.re"
+      - CMakeLists.txt
   MDViewer:
     type: application
     platform: macOS
@@ -19,11 +49,12 @@ targets:
     settings:
       INFOPLIST_FILE: MDViewer/Info.plist
       PRODUCT_BUNDLE_IDENTIFIER: com.mdviewer.app
+      HEADER_SEARCH_PATHS:
+        - $(SRCROOT)/Vendor/cmark-gfm/src/include
+        - $(SRCROOT)/Vendor/cmark-gfm/extensions/include
     dependencies:
-      - package: swift-cmark
-        product: cmark-gfm
-      - package: swift-cmark
-        product: cmark-gfm-extensions
+      - target: cmark-gfm
+      - target: cmark-gfm-extensions
   MDViewerTests:
     type: bundle.unit-test
     platform: macOS
@@ -31,5 +62,8 @@ targets:
       - MDViewerTests
     settings:
       GENERATE_INFOPLIST_FILE: YES
+      HEADER_SEARCH_PATHS:
+        - $(SRCROOT)/Vendor/cmark-gfm/src/include
+        - $(SRCROOT)/Vendor/cmark-gfm/extensions/include
     dependencies:
       - target: MDViewer

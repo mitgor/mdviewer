@@ -21,5 +21,6 @@ module cmark_gfm {
     header "scanners.h"
     header "syntax_extension.h"
     header "utf8.h"
+    header "../../extensions/include/cmark-gfm-core-extensions.h"
     export *
 }
