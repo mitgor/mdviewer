@@ -121,7 +121,7 @@ Plans:
 **Plans**: 2 plans
 Plans:
 - [x] 07-01-PLAN.md -- Create WebViewPool class and add pool support methods to WebContentView
-- [ ] 07-02-PLAN.md -- Integrate pool into AppDelegate and add unit tests
+- [x] 07-02-PLAN.md -- Integrate pool into AppDelegate and add unit tests
 
 ### Phase 8: Streaming Pipeline
 **Goal**: First visible content appears while the parser is still producing remaining chunks, closing the gap to sub-150ms warm launch
