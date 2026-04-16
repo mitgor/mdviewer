@@ -146,10 +146,11 @@ Plans:
   3. Native-rendered text uses Latin Modern Roman typography matching the WKWebView path visually
   4. User can toggle between native and web rendering via menu item if visual differences arise
   5. Warm launch to first visible content is under 100ms for the NSTextView path (measured via OSSignposter)
-**Plans**: 2 plans
+**Plans**: 3 plans
 Plans:
-- [x] 08-01-PLAN.md -- Streaming render API with buffer-reuse template assembly
-- [x] 08-02-PLAN.md -- Wire streaming pipeline into AppDelegate and WebContentView
+- [ ] 09-01-PLAN.md -- NativeRenderer (AST-to-NSAttributedString) and NativeContentView with OTF fonts
+- [ ] 09-02-PLAN.md -- Integration: AST pre-scan, AppDelegate routing, MarkdownWindow generalization, toggle menu
+- [ ] 09-03-PLAN.md -- NativeRendererTests and visual/performance verification checkpoint
 **UI hint**: yes
 
 ## Progress
@@ -167,5 +168,5 @@ Phases execute in numeric order: 6 -> 7 -> 8 -> 9
 | 5. Window Management | v2.0 | 1/1 | Complete | 2026-04-16 |
 | 6. Vendored cmark | v2.1 | 0/3 | Not started | - |
 | 7. WKWebView Pool | v2.1 | 0/2 | Not started | - |
-| 8. Streaming Pipeline | v2.1 | 0/? | Not started | - |
-| 9. Native Text Rendering | v2.1 | 0/? | Not started | - |
+| 8. Streaming Pipeline | v2.1 | 0/2 | Not started | - |
+| 9. Native Text Rendering | v2.1 | 0/3 | Not started | - |
