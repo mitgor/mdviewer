@@ -1,6 +1,7 @@
 import Cocoa
 import os
 import UniformTypeIdentifiers
+import WebKit
 
 private let appSignposter = OSSignposter(
     subsystem: "com.mdviewer.app",
@@ -165,6 +166,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
     private func displayResult(_ result: RenderResult, for url: URL, paintState: OSSignpostIntervalState) {
         let contentView = webViewPool.dequeue() ?? WebContentView(frame: .zero)
         contentView.delegate = self
+        contentView.setNavigationDelegate(self) // Monitor active web-process crashes
         openToPaintStates[ObjectIdentifier(contentView)] = paintState
 
         let window = MarkdownWindow(fileURL: url, contentView: contentView)
@@ -217,5 +219,19 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
         mainMenu.addItem(viewMenuItem)
 
         NSApp.mainMenu = mainMenu
+    }
+}
+
+// MARK: - WKNavigationDelegate (crash detection for active views)
+
+extension AppDelegate: WKNavigationDelegate {
+    func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+        guard let window = windows.first(where: { $0.contentViewWrapper.ownsWebView(webView) }) else { return }
+        let alert = NSAlert()
+        alert.messageText = "Rendering Process Crashed"
+        alert.informativeText = "The web content process for \"\(window.title)\" terminated unexpectedly. The window will be closed."
+        alert.alertStyle = .critical
+        alert.runModal()
+        window.close()
     }
 }
