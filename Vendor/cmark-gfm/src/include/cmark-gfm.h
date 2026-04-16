@@ -676,6 +676,30 @@ char *cmark_render_html(cmark_node *root, int options, cmark_llist *extensions);
 CMARK_GFM_EXPORT
 char *cmark_render_html_with_mem(cmark_node *root, int options, cmark_llist *extensions, cmark_mem *mem);
 
+/** Callback type for chunked HTML rendering.
+ *  @param data  Pointer to the HTML chunk data (not null-terminated).
+ *  @param len   Length of the chunk in bytes.
+ *  @param is_last  1 if this is the final chunk, 0 otherwise.
+ *  @param has_mermaid  1 if any mermaid code block was encountered so far.
+ *  @param userdata  User-provided context pointer.
+ *  @return 0 on success, non-zero to abort rendering.
+ */
+typedef int (*cmark_html_chunk_callback)(
+    const char *data, size_t len, int is_last, int has_mermaid, void *userdata);
+
+/** Render a node tree to HTML, invoking a callback with chunks of HTML
+ *  at top-level block boundaries when the accumulated buffer exceeds
+ *  @p chunk_byte_limit bytes.  Mermaid code blocks (info string "mermaid")
+ *  are emitted as <div class="mermaid-placeholder"> instead of <pre><code>.
+ *
+ *  @return 0 on success, or the non-zero value returned by the callback.
+ */
+CMARK_GFM_EXPORT
+int cmark_render_html_chunked(
+    cmark_node *root, int options, cmark_llist *extensions,
+    cmark_mem *mem, size_t chunk_byte_limit,
+    cmark_html_chunk_callback callback, void *userdata);
+
 /** Render a 'node' tree as a groff man page, without the header.
  * It is the caller's responsibility to free the returned buffer.
  */
