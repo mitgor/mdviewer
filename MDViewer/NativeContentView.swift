@@ -105,7 +105,7 @@ final class NativeContentView: NSView {
 
     /// Print the text view content directly (simpler than WKWebView workaround).
     func printContent(title: String) {
-        let printInfo = NSPrintInfo.shared.copy() as! NSPrintInfo
+        guard let printInfo = NSPrintInfo.shared.copy() as? NSPrintInfo else { return }
         let printOp = NSPrintOperation(view: textView, printInfo: printInfo)
         printOp.showsPrintPanel = true
         printOp.showsProgressPanel = true
