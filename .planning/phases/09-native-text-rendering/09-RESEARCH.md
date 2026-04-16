@@ -400,24 +400,24 @@ private enum Typography {
 | A3 | Style stack approach with ~15 node type handlers will cover all non-table/non-mermaid markdown | Pattern 2 | Missing node types would cause unstyled text; enumeration of all cmark_node_type values mitigates this |
 | A4 | textContainerInset of (20, 40) will visually approximate the CSS padding: 40px 20px 80px | Code Examples | May need visual tuning; the toggle feature (NATV-04) provides escape hatch |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **OTF Font File Acquisition**
+1. **OTF Font File Acquisition** RESOLVED: Download OTF files from CTAN and bundle them directly.
    - What we know: Latin Modern OTF files are available from CTAN/GUST (lm-2.007). Bundle adds ~3.5MB.
    - What's unclear: Whether the project should commit OTF files or convert WOFF2 at build time.
    - Recommendation: Download OTF files from CTAN and bundle them. 3.5MB is acceptable for a native app. Converting at build time adds build complexity.
 
-2. **NSTextView Content Width Constraint**
+2. **NSTextView Content Width Constraint** RESOLVED: Set textContainer.size.width = 680 with widthTracksTextView = false.
    - What we know: template.html uses `max-width: 680px`. NSTextView textContainerInset centers content but doesn't constrain the text container width.
    - What's unclear: Best approach to limit line length to 680px in NSTextView.
    - Recommendation: Set `textContainer.size.width = 680` and center the scroll view's document view, or calculate textContainerInset dynamically based on window width.
 
-3. **Monospace Toggle for Native Path**
+3. **Monospace Toggle for Native Path** RESOLVED: Re-render from cached AST root; defer as placeholder for now.
    - What we know: WebContentView.toggleMonospace() toggles a CSS class. The native path needs an equivalent.
    - What's unclear: Whether to re-render the entire NSAttributedString or modify attributes in-place.
    - Recommendation: Re-render. NSAttributedString attribute modification across the entire range is error-prone with nested styles. Re-rendering from the cached AST root is fast (<10ms for typical files).
 
-4. **Printing/PDF Export from NSTextView**
+4. **Printing/PDF Export from NSTextView** RESOLVED: Defer PDF export to web path via toggle; show informational alert in native mode.
    - What we know: WebContentView has printContent() and exportPDF() via WKWebView.createPDF.
    - What's unclear: Whether these features should work from the native path.
    - Recommendation: NSTextView supports NSPrintOperation natively (simpler than the WKWebView workaround). Implement print but defer PDF export to the web path via the toggle.
