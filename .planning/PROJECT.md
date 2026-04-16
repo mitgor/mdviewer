@@ -36,7 +36,7 @@ Open a markdown file and see beautifully rendered content instantly — sub-200m
 ### Active
 
 - [x] Vendor swift-cmark with direct-to-chunk AST output — Phase 6 (chunked callback API, C-level mermaid detection, human verification pending)
-- [ ] WKWebView warm pool (2-3 pre-warmed views) — eliminate init cost for 2nd+ file
+- [x] WKWebView warm pool (2 pre-warmed views) — Phase 7 (pool with async replenishment, crash recovery, open panel termination fix)
 - [ ] Streaming parse pipeline — incremental cmark feed with early first-screen emit
 - [ ] Zero-copy C-to-JS string bridge — eliminate intermediate Swift String allocations
 - [ ] Native NSTextView rendering for mermaid-free files — bypass WKWebView entirely
@@ -92,6 +92,8 @@ Open a markdown file and see beautifully rendered content instantly — sub-200m
 | Byte-size chunking over block-count chunking | ≤64KB chunks at block boundaries for true N-chunk rendering | ✓ Good |
 | Vendored cmark over SPM dependency | Project-owned C library enables custom chunked API and mermaid detection | ✓ Good |
 | Unified modulemap for cmark | Xcode 26 explicit modules required merging cmark_gfm + extensions | ✓ Good |
+| WebViewPool over single preWarmedContentView | Generalizes pre-warm to pool of 2 with auto-replenishment and crash recovery | ✓ Good |
+| pendingFileOpens guard | NSOpenPanel close triggers applicationShouldTerminateAfterLastWindowClosed before async render completes | ✓ Good |
 
 ## Evolution
 
@@ -111,4 +113,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-16 after Phase 6 — vendored cmark complete*
+*Last updated: 2026-04-16 after Phase 7 — WKWebView pool complete*
