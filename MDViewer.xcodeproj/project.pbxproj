@@ -65,6 +65,7 @@
 		96C17B7323B35A481A651433 /* table.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = F2C06A6FCED4EAE7C6D2F283 /* table.h */; };
 		98D4F3F33023B407AC3F3A4E /* syntax_extension.c in Sources */ = {isa = PBXBuildFile; fileRef = 5909833F9D0BE2C58796D152 /* syntax_extension.c */; };
 		A2E8911647FC9237916EE95B /* map.c in Sources */ = {isa = PBXBuildFile; fileRef = 83C830DD33E095FFEFC93113 /* map.c */; };
+		A4DA6E20CFA295E8B1AB4E46 /* WebViewPool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C41D7E0E4AB0828232D9127 /* WebViewPool.swift */; };
 		A8FA09BA5D51525F28E9C230 /* utf8.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2BFF53B4ABB3758CB407EBF7 /* utf8.h */; };
 		AB0A59120C170317962AEA5B /* cmark.c in Sources */ = {isa = PBXBuildFile; fileRef = 51610615A034BED9D24EDBC1 /* cmark.c */; };
 		B0D02BC50B6C5605480BB1A2 /* MarkdownRendererTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0272F7073B9F5CD226C6E09D /* MarkdownRendererTests.swift */; };
@@ -93,6 +94,7 @@
 		F23AC13895179F103CD27E79 /* mutex.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 1F452B7E06FACA63453F48D4 /* mutex.h */; };
 		F24E8E5CBBB4BA267768246A /* MDViewerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EB6A95B3025AA32EC03FDBE /* MDViewerTests.swift */; };
 		F58DDBF448C2B3BEA3C99BD0 /* strikethrough.c in Sources */ = {isa = PBXBuildFile; fileRef = 2D433D07AADF81B8CA7A637A /* strikethrough.c */; };
+		F7E784C532A0062B54ABB8DB /* WebViewPoolTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6490F96DEC8281AE42B8331D /* WebViewPoolTests.swift */; };
 		F80B93C1B52F5E9DAC1E8DB8 /* config.h.in in Resources */ = {isa = PBXBuildFile; fileRef = CD6D3207B26CDC75256511C6 /* config.h.in */; };
 		FE8BA6FE29B7B5A44C408F94 /* WebContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12A2FA1D55D58A86D56FE54C /* WebContentView.swift */; };
 		FF26986F89037C187064096D /* linked_list.c in Sources */ = {isa = PBXBuildFile; fileRef = D019F975282AA36B0F0162B9 /* linked_list.c */; };
@@ -219,10 +221,12 @@
 		5909833F9D0BE2C58796D152 /* syntax_extension.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = syntax_extension.c; sourceTree = "<group>"; };
 		5997F789C349652CF32FF0D2 /* libcmark-gfm.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libcmark-gfm.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		5B1B8DCBF9492BBFC65573E8 /* core-extensions.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = "core-extensions.c"; sourceTree = "<group>"; };
+		5C41D7E0E4AB0828232D9127 /* WebViewPool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebViewPool.swift; sourceTree = "<group>"; };
 		5C7B71AA16369A0F51753A6B /* iterator.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iterator.h; sourceTree = "<group>"; };
 		5F041AE6C5B490DBAC2FD0BD /* scanners.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = scanners.c; sourceTree = "<group>"; };
 		625F24907E9403F16198D516 /* render.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = render.h; sourceTree = "<group>"; };
 		62A7DF5F468BE7DC6DA620DC /* libcmark-gfm-extensions.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libcmark-gfm-extensions.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		6490F96DEC8281AE42B8331D /* WebViewPoolTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebViewPoolTests.swift; sourceTree = "<group>"; };
 		656AEFBF152EB541D481BD43 /* render.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = render.c; sourceTree = "<group>"; };
 		666C929692C0FE81736A06E9 /* registry.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = registry.h; sourceTree = "<group>"; };
 		690C1E385EDE8FE758C02F32 /* cmark-gfm_config.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "cmark-gfm_config.h"; sourceTree = "<group>"; };
@@ -314,6 +318,7 @@
 			children = (
 				0272F7073B9F5CD226C6E09D /* MarkdownRendererTests.swift */,
 				1EB6A95B3025AA32EC03FDBE /* MDViewerTests.swift */,
+				6490F96DEC8281AE42B8331D /* WebViewPoolTests.swift */,
 			);
 			path = MDViewerTests;
 			sourceTree = "<group>";
@@ -425,6 +430,7 @@
 				3D77E35CF5D4FF0D355944C7 /* MarkdownWindow.swift */,
 				1966ECECAAAD4198ECD170A7 /* PDFPrintView.swift */,
 				12A2FA1D55D58A86D56FE54C /* WebContentView.swift */,
+				5C41D7E0E4AB0828232D9127 /* WebViewPool.swift */,
 				4F0372BDD1E4DD42A3631314 /* Resources */,
 			);
 			path = MDViewer;
@@ -623,6 +629,7 @@
 				43E471432CED94DEC9D5EFB5 /* MarkdownWindow.swift in Sources */,
 				29ED46390C47B842EB878313 /* PDFPrintView.swift in Sources */,
 				FE8BA6FE29B7B5A44C408F94 /* WebContentView.swift in Sources */,
+				A4DA6E20CFA295E8B1AB4E46 /* WebViewPool.swift in Sources */,
 				42D2EE216F561D3381E4D192 /* main.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -681,6 +688,7 @@
 			files = (
 				F24E8E5CBBB4BA267768246A /* MDViewerTests.swift in Sources */,
 				B0D02BC50B6C5605480BB1A2 /* MarkdownRendererTests.swift in Sources */,
+				F7E784C532A0062B54ABB8DB /* WebViewPoolTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

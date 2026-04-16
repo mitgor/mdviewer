@@ -9,6 +9,7 @@ final class WebViewPool: NSObject {
 
     init(capacity: Int = 2) {
         self.capacity = capacity
+        super.init()
         for _ in 0..<capacity {
             pool.append(createView())
         }
