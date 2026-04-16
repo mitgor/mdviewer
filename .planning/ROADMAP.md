@@ -149,7 +149,7 @@ Plans:
 **Plans**: 3 plans
 Plans:
 - [x] 09-01-PLAN.md -- NativeRenderer (AST-to-NSAttributedString) and NativeContentView with OTF fonts
-- [ ] 09-02-PLAN.md -- Integration: AST pre-scan, AppDelegate routing, MarkdownWindow generalization, toggle menu
+- [x] 09-02-PLAN.md -- Integration: AST pre-scan, AppDelegate routing, MarkdownWindow generalization, toggle menu
 - [ ] 09-03-PLAN.md -- NativeRendererTests and visual/performance verification checkpoint
 **UI hint**: yes
 
