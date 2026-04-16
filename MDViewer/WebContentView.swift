@@ -72,6 +72,7 @@ final class WebContentView: NSView, WKScriptMessageHandler {
     func loadContent(page: String, remainingChunks: [String], hasMermaid: Bool) {
         self.remainingChunks = remainingChunks
         self.hasMermaid = hasMermaid
+        self.hasProcessedFirstPaint = false  // reset for this load
         let resourceURL = Bundle.main.resourceURL ?? Bundle.main.bundleURL
         webView.loadHTMLString(page, baseURL: resourceURL)
     }
