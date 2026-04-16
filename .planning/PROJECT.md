@@ -35,7 +35,7 @@ Open a markdown file and see beautifully rendered content instantly — sub-200m
 
 ### Active
 
-- [ ] Vendor swift-cmark with direct-to-chunk AST output — skip regex-based HTML chunking
+- [x] Vendor swift-cmark with direct-to-chunk AST output — Phase 6 (chunked callback API, C-level mermaid detection, human verification pending)
 - [ ] WKWebView warm pool (2-3 pre-warmed views) — eliminate init cost for 2nd+ file
 - [ ] Streaming parse pipeline — incremental cmark feed with early first-screen emit
 - [ ] Zero-copy C-to-JS string bridge — eliminate intermediate Swift String allocations
@@ -90,6 +90,8 @@ Open a markdown file and see beautifully rendered content instantly — sub-200m
 | mappedIfSafe over String(contentsOf:) | Avoids full-file heap allocation for 10MB+ files | ✓ Good |
 | callAsyncJavaScript over evaluateJavaScript | Typed arguments eliminate injection risk from string interpolation | ✓ Good |
 | Byte-size chunking over block-count chunking | ≤64KB chunks at block boundaries for true N-chunk rendering | ✓ Good |
+| Vendored cmark over SPM dependency | Project-owned C library enables custom chunked API and mermaid detection | ✓ Good |
+| Unified modulemap for cmark | Xcode 26 explicit modules required merging cmark_gfm + extensions | ✓ Good |
 
 ## Evolution
 
@@ -109,4 +111,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-16 after milestone v2.1 started — deep optimization*
+*Last updated: 2026-04-16 after Phase 6 — vendored cmark complete*
