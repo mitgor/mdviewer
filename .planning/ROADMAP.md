@@ -149,7 +149,7 @@ Plans:
 **Plans**: 2 plans
 Plans:
 - [x] 08-01-PLAN.md -- Streaming render API with buffer-reuse template assembly
-- [ ] 08-02-PLAN.md -- Wire streaming pipeline into AppDelegate and WebContentView
+- [x] 08-02-PLAN.md -- Wire streaming pipeline into AppDelegate and WebContentView
 **UI hint**: yes
 
 ## Progress
