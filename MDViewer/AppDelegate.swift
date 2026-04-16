@@ -123,10 +123,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
     // MARK: - Private
 
     private func ensureTemplateLoaded() {
-        if template == nil {
-            loadTemplate()
-            setupMenu()
-        }
+        guard template == nil else { return }
+        loadTemplate()
     }
 
     private func loadTemplate() {
