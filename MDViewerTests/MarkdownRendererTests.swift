@@ -171,4 +171,111 @@ final class MarkdownRendererTests: XCTestCase {
             XCTAssertFalse(chunk.isEmpty, "Chunk \(index) should not be empty")
         }
     }
+
+    // MARK: - Streaming Render Tests (Task 1 TDD RED)
+
+    func testStreamingRenderSmallContent() {
+        let renderer = MarkdownRenderer()
+        let template = SplitTemplate(templateHTML: "<body>{{FIRST_CHUNK}}</body>")
+        var firstPage: String?
+        var completedChunks: [String]?
+        var completedMermaid: Bool?
+
+        renderer.renderStreaming(markdown: "# Hello\n\nWorld", template: template,
+            onFirstChunk: { page in
+                firstPage = page
+            },
+            onComplete: { chunks, hasMermaid in
+                completedChunks = chunks
+                completedMermaid = hasMermaid
+            }
+        )
+
+        XCTAssertNotNil(firstPage)
+        XCTAssertTrue(firstPage!.contains("<body>"))
+        XCTAssertTrue(firstPage!.contains("<h1>"))
+        XCTAssertTrue(firstPage!.contains("</body>"))
+        XCTAssertEqual(completedChunks?.count, 0, "Small content should have no remaining chunks")
+        XCTAssertEqual(completedMermaid, false)
+    }
+
+    func testStreamingRenderLargeContent() {
+        let renderer = MarkdownRenderer()
+        let template = SplitTemplate(templateHTML: "<body>{{FIRST_CHUNK}}</body>")
+        var firstPage: String?
+        var completedChunks: [String]?
+
+        var md = ""
+        for i in 0..<500 {
+            md += "## Heading \(i)\n\n" + String(repeating: "Word ", count: 60) + "\n\n"
+        }
+
+        renderer.renderStreaming(markdown: md, template: template,
+            onFirstChunk: { page in
+                firstPage = page
+            },
+            onComplete: { chunks, _ in
+                completedChunks = chunks
+            }
+        )
+
+        XCTAssertNotNil(firstPage)
+        XCTAssertTrue(firstPage!.contains("<body>"))
+        XCTAssertTrue(firstPage!.contains("Heading 0"))
+        XCTAssertNotNil(completedChunks)
+        XCTAssertGreaterThan(completedChunks!.count, 0, "Large content should have remaining chunks")
+    }
+
+    func testStreamingRenderSingleChunkDegrades() {
+        let renderer = MarkdownRenderer()
+        let template = SplitTemplate(templateHTML: "<body>{{FIRST_CHUNK}}</body>")
+        var completedChunks: [String]?
+
+        renderer.renderStreaming(markdown: "Hello", template: template,
+            onFirstChunk: { _ in },
+            onComplete: { chunks, _ in
+                completedChunks = chunks
+            }
+        )
+
+        XCTAssertNotNil(completedChunks)
+        XCTAssertEqual(completedChunks!.count, 0, "Single-chunk files should deliver empty remaining array")
+    }
+
+    func testAssembleFirstPageContainsTemplateAndChunk() {
+        let renderer = MarkdownRenderer()
+        let template = SplitTemplate(templateHTML: "PREFIX{{FIRST_CHUNK}}SUFFIX")
+        let page = renderer.assembleFirstPage(template: template, chunk: "<h1>Test</h1>")
+
+        XCTAssertTrue(page.contains("PREFIX"))
+        XCTAssertTrue(page.contains("SUFFIX"))
+        XCTAssertTrue(page.contains("<h1>Test</h1>"))
+        XCTAssertEqual(page, "PREFIX<h1>Test</h1>SUFFIX")
+    }
+
+    func testStreamingRenderMermaidInLaterChunks() {
+        let renderer = MarkdownRenderer()
+        let template = SplitTemplate(templateHTML: "<body>{{FIRST_CHUNK}}</body>")
+        var completedMermaid: Bool?
+
+        let md = """
+        # Title
+
+        Some content here.
+
+        ```mermaid
+        graph TD
+            A --> B
+        ```
+        """
+
+        renderer.renderStreaming(markdown: md, template: template,
+            onFirstChunk: { _ in },
+            onComplete: { _, hasMermaid in
+                completedMermaid = hasMermaid
+            }
+        )
+
+        XCTAssertEqual(completedMermaid, true, "Mermaid blocks should be detected via onComplete")
+    }
 }
