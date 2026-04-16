@@ -134,7 +134,7 @@ Plans:
 **Plans**: 2 plans
 Plans:
 - [x] 08-01-PLAN.md -- Streaming render API with buffer-reuse template assembly
-- [ ] 08-02-PLAN.md -- Wire streaming pipeline into AppDelegate and WebContentView
+- [x] 08-02-PLAN.md -- Wire streaming pipeline into AppDelegate and WebContentView
 
 ### Phase 9: Native Text Rendering
 **Goal**: Simple markdown files (no mermaid, no GFM tables) render via NSTextView, bypassing WKWebView for dramatically faster display
@@ -148,7 +148,7 @@ Plans:
   5. Warm launch to first visible content is under 100ms for the NSTextView path (measured via OSSignposter)
 **Plans**: 2 plans
 Plans:
-- [ ] 08-01-PLAN.md -- Streaming render API with buffer-reuse template assembly
+- [x] 08-01-PLAN.md -- Streaming render API with buffer-reuse template assembly
 - [ ] 08-02-PLAN.md -- Wire streaming pipeline into AppDelegate and WebContentView
 **UI hint**: yes
 
