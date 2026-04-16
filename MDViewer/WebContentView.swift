@@ -128,7 +128,14 @@ final class WebContentView: NSView, WKScriptMessageHandler {
         for (index, chunk) in chunks.enumerated() {
             let delay = Double(index) * 0.016  // 16ms stagger per chunk
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-                self?.webView.callAsyncJavaScript(
+                guard let self else {
+                    // self gone — end interval on the last slot to avoid leaking
+                    if index == chunkCount - 1 {
+                        renderingSignposter.endInterval("chunk-inject", chunkInjectState)
+                    }
+                    return
+                }
+                self.webView.callAsyncJavaScript(
                     "window.appendChunk(html)",
                     arguments: ["html": chunk],
                     in: nil,
