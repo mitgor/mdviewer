@@ -149,10 +149,54 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
         let paintState = appSignposter.beginInterval("open-to-paint")
         pendingFileOpens += 1
 
-        // Parse markdown on background thread — keeps UI responsive for large files
+        // Parse markdown on background thread with streaming dispatch —
+        // first chunk reaches WKWebView while renderer may still produce remaining chunks
         let renderer = self.renderer
-        DispatchQueue.global(qos: .userInitiated).async {
-            guard let result = renderer.renderFullPage(fileURL: url, template: tmpl) else {
+        var streamContentView: WebContentView?
+
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let success = renderer.renderStreaming(fileURL: url, template: tmpl,
+                onFirstChunk: { page in
+                    // Called from background thread during C callback —
+                    // dispatch first chunk to main thread immediately (STRM-01)
+                    DispatchQueue.main.async { [weak self] in
+                        guard let self else { return }
+                        let contentView = self.webViewPool.dequeue() ?? WebContentView(frame: .zero)
+                        contentView.delegate = self
+                        contentView.setNavigationDelegate(self) // Monitor active web-process crashes
+                        self.openToPaintStates[ObjectIdentifier(contentView)] = paintState
+                        streamContentView = contentView
+
+                        contentView.loadContent(page: page, remainingChunks: [], hasMermaid: false)
+
+                        let window = MarkdownWindow(fileURL: url, contentView: contentView)
+                        self.windows.append(window)
+
+                        NotificationCenter.default.addObserver(
+                            forName: NSWindow.willCloseNotification,
+                            object: window,
+                            queue: .main
+                        ) { [weak self] notification in
+                            guard let closedWindow = notification.object as? MarkdownWindow else { return }
+                            self?.windows.removeAll { $0 === closedWindow }
+                        }
+
+                        window.makeKeyAndOrderFront(nil)
+                        window.alphaValue = 1.0
+                    }
+                },
+                onComplete: { remainingChunks, hasMermaid in
+                    // Called from background thread after all chunks produced
+                    DispatchQueue.main.async { [weak self] in
+                        self?.pendingFileOpens -= 1
+                        streamContentView?.setRemainingChunks(
+                            remainingChunks, hasMermaid: hasMermaid
+                        )
+                    }
+                }
+            )
+
+            if !success {
                 DispatchQueue.main.async { [weak self] in
                     self?.pendingFileOpens -= 1
                     appSignposter.endInterval("open-to-paint", paintState)
@@ -162,12 +206,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
                     alert.alertStyle = .warning
                     alert.runModal()
                 }
-                return
-            }
-
-            DispatchQueue.main.async { [weak self] in
-                self?.pendingFileOpens -= 1
-                self?.displayResult(result, for: url, paintState: paintState)
             }
         }
     }
