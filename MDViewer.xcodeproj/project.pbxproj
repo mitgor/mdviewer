@@ -35,6 +35,7 @@
 		3A5A38630445DF2A6112AC9E /* buffer.c in Sources */ = {isa = PBXBuildFile; fileRef = F94048D341B1E3BDEA00423B /* buffer.c */; };
 		3A798B41CD1634040E9E3736 /* libcmark-gfm.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5997F789C349652CF32FF0D2 /* libcmark-gfm.a */; };
 		3EAB4F5E691FD04E1F7611C1 /* tasklist.c in Sources */ = {isa = PBXBuildFile; fileRef = 20C1E15AF1FC1272A4FF745F /* tasklist.c */; };
+		3ED7B399F4838BC6E9963261 /* NativeRendererTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28D1B1EAF0B85B0D86D59318 /* NativeRendererTests.swift */; };
 		3EE2CFEAED6FAE7D661F1D30 /* houdini_href_e.c in Sources */ = {isa = PBXBuildFile; fileRef = ADB36FF70D2B09CE25EDA8EA /* houdini_href_e.c */; };
 		42D2EE216F561D3381E4D192 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8416F124345CD28D11536DF /* main.swift */; };
 		4321E2F554E8176EFB92F629 /* chunk.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 721BD3832352A462F3E9B4CE /* chunk.h */; };
@@ -209,6 +210,7 @@
 		1F452B7E06FACA63453F48D4 /* mutex.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = mutex.h; sourceTree = "<group>"; };
 		20C1E15AF1FC1272A4FF745F /* tasklist.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = tasklist.c; sourceTree = "<group>"; };
 		2599F3A82A7155806A829C36 /* xml.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = xml.c; sourceTree = "<group>"; };
+		28D1B1EAF0B85B0D86D59318 /* NativeRendererTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeRendererTests.swift; sourceTree = "<group>"; };
 		2B3CB629C8E2BF06A82CFFCD /* commonmark.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = commonmark.c; sourceTree = "<group>"; };
 		2BFF53B4ABB3758CB407EBF7 /* utf8.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = utf8.h; sourceTree = "<group>"; };
 		2C55CBE2F371713BBDAAFC0D /* references.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = references.h; sourceTree = "<group>"; };
@@ -328,6 +330,7 @@
 			children = (
 				0272F7073B9F5CD226C6E09D /* MarkdownRendererTests.swift */,
 				1EB6A95B3025AA32EC03FDBE /* MDViewerTests.swift */,
+				28D1B1EAF0B85B0D86D59318 /* NativeRendererTests.swift */,
 				6490F96DEC8281AE42B8331D /* WebViewPoolTests.swift */,
 			);
 			path = MDViewerTests;
@@ -708,6 +711,7 @@
 			files = (
 				F24E8E5CBBB4BA267768246A /* MDViewerTests.swift in Sources */,
 				B0D02BC50B6C5605480BB1A2 /* MarkdownRendererTests.swift in Sources */,
+				3ED7B399F4838BC6E9963261 /* NativeRendererTests.swift in Sources */,
 				F7E784C532A0062B54ABB8DB /* WebViewPoolTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
