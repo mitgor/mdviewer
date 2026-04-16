@@ -104,7 +104,11 @@ Plans:
   3. Mermaid code blocks produce placeholder divs directly from the C renderer (no regex scan of rendered HTML)
   4. Opening any previously-working markdown file produces identical rendered output to the current pipeline
   5. Rendering a file twice reuses the cached extension list (no per-render cmark_find_syntax_extension calls)
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 06-01-PLAN.md -- Vendor cmark-gfm sources and configure static library build targets
+- [ ] 06-02-PLAN.md -- Add chunked HTML callback API and mermaid detection to vendored html.c
+- [ ] 06-03-PLAN.md -- Rewrite MarkdownRenderer to use chunked C API with cached extensions
 
 ### Phase 7: WKWebView Pool
 **Goal**: Opening a second (or subsequent) file delivers content to a pre-warmed WKWebView with zero initialization delay
@@ -152,7 +156,7 @@ Phases execute in numeric order: 6 -> 7 -> 8 -> 9
 | 3. Launch Speed | v2.0 | 3/3 | Complete | 2026-04-16 |
 | 4. Mermaid Script Loading | v2.0 | 1/1 | Complete | 2026-04-16 |
 | 5. Window Management | v2.0 | 1/1 | Complete | 2026-04-16 |
-| 6. Vendored cmark | v2.1 | 0/? | Not started | - |
+| 6. Vendored cmark | v2.1 | 0/3 | Not started | - |
 | 7. WKWebView Pool | v2.1 | 0/? | Not started | - |
 | 8. Streaming Pipeline | v2.1 | 0/? | Not started | - |
 | 9. Native Text Rendering | v2.1 | 0/? | Not started | - |
