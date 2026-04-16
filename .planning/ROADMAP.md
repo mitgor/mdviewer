@@ -108,7 +108,7 @@ Plans:
 Plans:
 - [x] 06-01-PLAN.md -- Vendor cmark-gfm sources and configure static library build targets
 - [x] 06-02-PLAN.md -- Add chunked HTML callback API and mermaid detection to vendored html.c
-- [ ] 06-03-PLAN.md -- Rewrite MarkdownRenderer to use chunked C API with cached extensions
+- [x] 06-03-PLAN.md -- Rewrite MarkdownRenderer to use chunked C API with cached extensions
 
 ### Phase 7: WKWebView Pool
 **Goal**: Opening a second (or subsequent) file delivers content to a pre-warmed WKWebView with zero initialization delay

@@ -10,9 +10,9 @@
 - [x] **CMARK-01**: App uses a vendored copy of swift-cmark built as part of the Xcode project (no SPM dependency)
 - [x] **CMARK-02**: Vendored cmark exposes a chunked HTML callback API that emits ≤64KB blocks at top-level AST boundaries
 - [x] **CMARK-03**: Mermaid code blocks are detected in the C renderer (info string check) and emitted as placeholder divs
-- [ ] **CMARK-04**: MarkdownRenderer uses the chunked API directly, eliminating regex-based HTML chunking and mermaid regex scan
-- [ ] **CMARK-05**: Cached cmark extension list reused across renders (no per-render cmark_find_syntax_extension lookups)
-- [ ] **CMARK-06**: Entity encoding uses append(contentsOf:) with correct capacity reservation
+- [x] **CMARK-04**: MarkdownRenderer uses the chunked API directly, eliminating regex-based HTML chunking and mermaid regex scan
+- [x] **CMARK-05**: Cached cmark extension list reused across renders (no per-render cmark_find_syntax_extension lookups)
+- [x] **CMARK-06**: Entity encoding uses append(contentsOf:) with correct capacity reservation
 
 ### WKWebView Pool
 
@@ -78,9 +78,9 @@
 | CMARK-01 | Phase 6 | Complete |
 | CMARK-02 | Phase 6 | Complete |
 | CMARK-03 | Phase 6 | Complete |
-| CMARK-04 | Phase 6 | Pending |
-| CMARK-05 | Phase 6 | Pending |
-| CMARK-06 | Phase 6 | Pending |
+| CMARK-04 | Phase 6 | Complete |
+| CMARK-05 | Phase 6 | Complete |
+| CMARK-06 | Phase 6 | Complete |
 | POOL-01 | Phase 7 | Pending |
 | POOL-02 | Phase 7 | Pending |
 | POOL-03 | Phase 7 | Pending |
