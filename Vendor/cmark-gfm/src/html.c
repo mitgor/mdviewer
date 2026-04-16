@@ -28,6 +28,14 @@ static void escape_html(cmark_strbuf *dest, const unsigned char *source,
   houdini_escape_html0(dest, source, length, 0);
 }
 
+/* Forward declaration for chunked context (used by S_render_node for mermaid detection) */
+typedef struct {
+    size_t chunk_byte_limit;
+    cmark_html_chunk_callback callback;
+    void *userdata;
+    int has_mermaid;
+} cmark_chunked_context;
+
 static void filter_html_block(cmark_html_renderer *renderer, uint8_t *data, size_t len) {
   cmark_strbuf *html = renderer->html;
   cmark_llist *it;
@@ -230,8 +238,34 @@ static int S_render_node(cmark_html_renderer *renderer, cmark_node *node,
     break;
   }
 
-  case CMARK_NODE_CODE_BLOCK:
+  case CMARK_NODE_CODE_BLOCK: {
     cmark_html_render_cr(html);
+
+    /* Check for mermaid info string before normal rendering */
+    if (node->as.code.info.len > 0) {
+      bufsize_t first_tag = 0;
+      while (first_tag < node->as.code.info.len &&
+             !cmark_isspace(node->as.code.info.data[first_tag])) {
+        first_tag += 1;
+      }
+
+      if (first_tag == 7 &&
+          memcmp(node->as.code.info.data, "mermaid", 7) == 0) {
+        /* Emit mermaid placeholder instead of <pre><code> */
+        cmark_strbuf_puts_lit(html,
+          "<div class=\"mermaid-placeholder\" data-mermaid-source=\"");
+        escape_html(html, node->as.code.literal.data,
+                    node->as.code.literal.len);
+        cmark_strbuf_puts_lit(html,
+          "\"><span style=\"color:#999;font-size:0.9em;\">"
+          "Loading diagram...</span></div>\n");
+        /* Set hasMermaid flag via opaque context */
+        if (renderer->opaque) {
+          ((cmark_chunked_context *)renderer->opaque)->has_mermaid = 1;
+        }
+        break;
+      }
+    }
 
     if (node->as.code.info.len == 0) {
       cmark_strbuf_puts_lit(html, "<pre");
@@ -270,6 +304,7 @@ static int S_render_node(cmark_html_renderer *renderer, cmark_node *node,
     escape_html(html, node->as.code.literal.data, node->as.code.literal.len);
     cmark_strbuf_puts_lit(html, "</code></pre>\n");
     break;
+  }
 
   case CMARK_NODE_HTML_BLOCK:
     cmark_html_render_cr(html);
@@ -535,4 +570,63 @@ char *cmark_render_html_with_mem(cmark_node *root, int options, cmark_llist *ext
 
   cmark_iter_free(iter);
   return result;
+}
+
+/* --- Chunked HTML rendering with mermaid detection --- */
+
+int cmark_render_html_chunked(
+    cmark_node *root, int options, cmark_llist *extensions,
+    cmark_mem *mem, size_t chunk_byte_limit,
+    cmark_html_chunk_callback callback, void *userdata) {
+
+  cmark_strbuf html = CMARK_BUF_INIT(mem);
+  cmark_strbuf_grow(&html, 8192);
+  cmark_event_type ev_type;
+  cmark_node *cur;
+
+  cmark_chunked_context ctx = {chunk_byte_limit, callback, userdata, 0};
+  cmark_html_renderer renderer = {&html, NULL, NULL, 0, 0, &ctx, false, true};
+  cmark_iter *iter = cmark_iter_new(root);
+  int rc = 0;
+
+  for (cmark_llist *tmp = extensions; tmp; tmp = tmp->next)
+    if (((cmark_syntax_extension *) tmp->data)->html_filter_func)
+      renderer.filter_extensions = cmark_llist_append(
+          mem, renderer.filter_extensions,
+          (cmark_syntax_extension *) tmp->data);
+
+  renderer.has_filter_extensions = (renderer.filter_extensions != NULL);
+
+  while ((ev_type = cmark_iter_next_inline(iter)) != CMARK_EVENT_DONE) {
+    cur = cmark_iter_get_node_inline(iter);
+    S_render_node(&renderer, cur, ev_type, options);
+
+    /* Emit chunk at top-level block EXIT when buffer exceeds threshold */
+    if (ev_type == CMARK_EVENT_EXIT &&
+        cur->parent != NULL &&
+        cur->parent->type == CMARK_NODE_DOCUMENT &&
+        (size_t)html.size >= chunk_byte_limit) {
+      rc = callback((const char *)html.ptr, (size_t)html.size,
+                     0, ctx.has_mermaid, userdata);
+      if (rc != 0) goto done;
+      cmark_strbuf_clear(&html);
+    }
+  }
+
+  /* Append footnote section if present */
+  if (renderer.footnote_ix) {
+    cmark_strbuf_puts_lit(&html, "</ol>\n</section>\n");
+  }
+
+  /* Final chunk (may be empty if last boundary aligned exactly) */
+  if (html.size > 0 || rc == 0) {
+    rc = callback((const char *)html.ptr, (size_t)html.size,
+                   1, ctx.has_mermaid, userdata);
+  }
+
+done:
+  cmark_strbuf_free(&html);
+  cmark_llist_free(mem, renderer.filter_extensions);
+  cmark_iter_free(iter);
+  return rc;
 }

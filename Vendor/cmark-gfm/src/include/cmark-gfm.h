@@ -690,7 +690,7 @@ typedef int (*cmark_html_chunk_callback)(
 /** Render a node tree to HTML, invoking a callback with chunks of HTML
  *  at top-level block boundaries when the accumulated buffer exceeds
  *  @p chunk_byte_limit bytes.  Mermaid code blocks (info string "mermaid")
- *  are emitted as <div class="mermaid-placeholder"> instead of <pre><code>.
+ *  are emitted as \c mermaid-placeholder divs instead of pre/code blocks.
  *
  *  @return 0 on success, or the non-zero value returned by the callback.
  */
