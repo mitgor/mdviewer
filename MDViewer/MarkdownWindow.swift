@@ -5,10 +5,29 @@ final class MarkdownWindow: NSWindow {
     private static let defaultSize = NSSize(width: 720, height: 900)
     private static var lastCascadePoint: NSPoint = .zero
 
-    let contentViewWrapper: WebContentView
+    /// The content view hosting rendered markdown (either WebContentView or NativeContentView).
+    let contentViewWrapper: NSView
 
-    init(fileURL: URL, contentView: WebContentView) {
+    /// Whether this window is using the native (NSTextView) rendering path.
+    private(set) var isNativeRendering: Bool
+
+    /// The file URL this window is displaying, retained for re-render on toggle.
+    let fileURL: URL
+
+    /// Type-checked access to the web content view (nil if using native path).
+    var webContentView: WebContentView? {
+        contentViewWrapper as? WebContentView
+    }
+
+    /// Type-checked access to the native content view (nil if using web path).
+    var nativeContentView: NativeContentView? {
+        contentViewWrapper as? NativeContentView
+    }
+
+    init(fileURL: URL, contentView: NSView, isNative: Bool) {
         self.contentViewWrapper = contentView
+        self.isNativeRendering = isNative
+        self.fileURL = fileURL
 
         // Start with a centered frame; autosave may override below
         let centeredFrame: NSRect

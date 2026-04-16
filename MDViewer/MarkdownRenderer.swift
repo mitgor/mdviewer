@@ -242,6 +242,52 @@ final class MarkdownRenderer {
         return true
     }
 
+    // MARK: - AST Pre-scan (NATV-01)
+
+    /// Parse markdown into a cmark AST root node.
+    /// Caller owns the returned pointer and must free it with `cmark_node_free`.
+    func parseMarkdown(_ markdown: String) -> UnsafeMutablePointer<cmark_node>? {
+        let options: Int32 = CMARK_OPT_SMART | CMARK_OPT_UNSAFE
+
+        guard let parser = cmark_parser_new(options) else {
+            return nil
+        }
+
+        let extNames = ["table", "strikethrough", "autolink", "tasklist"]
+        for name in extNames {
+            if let e = cmark_find_syntax_extension(name) {
+                cmark_parser_attach_syntax_extension(parser, e)
+            }
+        }
+
+        cmark_parser_feed(parser, markdown, markdown.utf8.count)
+        let root = cmark_parser_finish(parser)
+        cmark_parser_free(parser)
+        return root
+    }
+
+    /// Pre-scan AST to determine if native rendering is possible.
+    /// Returns false if any top-level node is a GFM table or mermaid code block.
+    func canRenderNatively(root: UnsafeMutablePointer<cmark_node>) -> Bool {
+        var child = cmark_node_first_child(root)
+        while let node = child {
+            // Check for GFM table extension nodes
+            if let typeStr = cmark_node_get_type_string(node),
+               String(cString: typeStr) == "table" {
+                return false
+            }
+            // Check for mermaid code blocks
+            let nodeType = cmark_node_get_type(node)
+            if nodeType == CMARK_NODE_CODE_BLOCK,
+               let info = cmark_node_get_fence_info(node),
+               String(cString: info).lowercased() == "mermaid" {
+                return false
+            }
+            child = cmark_node_next(node)
+        }
+        return true
+    }
+
     // MARK: - Batch Render (existing API)
 
     func renderFullPage(markdown: String, template: SplitTemplate) -> RenderResult {

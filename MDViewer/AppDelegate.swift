@@ -98,17 +98,17 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
 
     @objc func toggleMonospace(_ sender: Any?) {
         guard let window = NSApp.keyWindow as? MarkdownWindow else { return }
-        window.contentViewWrapper.toggleMonospace()
+        (window.contentViewWrapper as? WebContentView)?.toggleMonospace()
     }
 
     @objc func printDocument(_ sender: Any?) {
         guard let window = NSApp.keyWindow as? MarkdownWindow else { return }
-        window.contentViewWrapper.printContent(title: window.title)
+        (window.contentViewWrapper as? WebContentView)?.printContent(title: window.title)
     }
 
     @objc func exportPDF(_ sender: Any?) {
         guard let window = NSApp.keyWindow as? MarkdownWindow else { return }
-        window.contentViewWrapper.exportPDF(filename: window.title)
+        (window.contentViewWrapper as? WebContentView)?.exportPDF(filename: window.title)
     }
 
     // MARK: - WebContentViewDelegate
@@ -169,7 +169,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
 
                         contentView.loadContent(page: page, remainingChunks: [], hasMermaid: false)
 
-                        let window = MarkdownWindow(fileURL: url, contentView: contentView)
+                        let window = MarkdownWindow(fileURL: url, contentView: contentView, isNative: false)
                         self.windows.append(window)
 
                         NotificationCenter.default.addObserver(
@@ -216,7 +216,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
         contentView.setNavigationDelegate(self) // Monitor active web-process crashes
         openToPaintStates[ObjectIdentifier(contentView)] = paintState
 
-        let window = MarkdownWindow(fileURL: url, contentView: contentView)
+        let window = MarkdownWindow(fileURL: url, contentView: contentView, isNative: false)
         windows.append(window)
 
         NotificationCenter.default.addObserver(
@@ -273,7 +273,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
 
 extension AppDelegate: WKNavigationDelegate {
     func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
-        guard let window = windows.first(where: { $0.contentViewWrapper.ownsWebView(webView) }) else { return }
+        guard let window = windows.first(where: { ($0.contentViewWrapper as? WebContentView)?.ownsWebView(webView) == true }) else { return }
         let alert = NSAlert()
         alert.messageText = "Rendering Process Crashed"
         alert.informativeText = "The web content process for \"\(window.title)\" terminated unexpectedly. The window will be closed."
