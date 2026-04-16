@@ -37,7 +37,7 @@ Open a markdown file and see beautifully rendered content instantly — sub-200m
 
 - [x] Vendor swift-cmark with direct-to-chunk AST output — Phase 6 (chunked callback API, C-level mermaid detection, human verification pending)
 - [x] WKWebView warm pool (2 pre-warmed views) — Phase 7 (pool with async replenishment, crash recovery, open panel termination fix)
-- [ ] Streaming parse pipeline — incremental cmark feed with early first-screen emit
+- [x] Streaming parse pipeline — Phase 8 (first chunk dispatched mid-render, buffer-reuse template assembly, signpost instrumentation)
 - [ ] Zero-copy C-to-JS string bridge — eliminate intermediate Swift String allocations
 - [ ] Native NSTextView rendering for mermaid-free files — bypass WKWebView entirely
 - [ ] Sub-100ms launch to first visible content (184.50ms measured on M4 Max with pre-warm active)
@@ -113,4 +113,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-16 after Phase 7 — WKWebView pool complete*
+*Last updated: 2026-04-16 after Phase 8 — streaming pipeline complete*
