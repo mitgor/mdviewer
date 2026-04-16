@@ -4,14 +4,14 @@ milestone: v2.1
 milestone_name: Deep Optimization
 status: executing
 stopped_at: Completed 06-03-PLAN.md
-last_updated: "2026-04-16T11:07:29.772Z"
-last_activity: 2026-04-16
+last_updated: "2026-04-16T11:25:56.427Z"
+last_activity: 2026-04-16 -- Phase 08 execution started
 progress:
   total_phases: 4
   completed_phases: 2
-  total_plans: 5
+  total_plans: 7
   completed_plans: 5
-  percent: 100
+  percent: 71
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-16)
 
 **Core value:** Open a markdown file and see beautifully rendered content instantly
-**Current focus:** Phase 07 — wkwebview-pool
+**Current focus:** Phase 08 — streaming-pipeline
 
 ## Current Position
 
-Phase: 8
-Plan: Not started
-Status: Executing Phase 07
-Last activity: 2026-04-16
+Phase: 08 (streaming-pipeline) — EXECUTING
+Plan: 1 of 2
+Status: Executing Phase 08
+Last activity: 2026-04-16 -- Phase 08 execution started
 
 Progress: [..........] 0% (v2.1 phases)
 

@@ -133,7 +133,7 @@ Plans:
   3. Warm launch to first visible content is under 150ms for the WKWebView path (measured via OSSignposter)
 **Plans**: 2 plans
 Plans:
-- [ ] 08-01-PLAN.md -- Streaming render API with buffer-reuse template assembly
+- [x] 08-01-PLAN.md -- Streaming render API with buffer-reuse template assembly
 - [ ] 08-02-PLAN.md -- Wire streaming pipeline into AppDelegate and WebContentView
 
 ### Phase 9: Native Text Rendering
