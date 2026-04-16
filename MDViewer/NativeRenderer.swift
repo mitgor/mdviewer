@@ -60,13 +60,8 @@ final class NativeRenderer {
 
     // MARK: - Font Registration
 
-    private static var fontsRegistered = false
-
-    /// Register bundled OTF fonts for Core Text. Called once at app startup.
-    static func registerFonts() {
-        guard !fontsRegistered else { return }
-        fontsRegistered = true
-
+    /// Thread-safe one-time font registration using Swift's guaranteed-lazy static let.
+    private static let _fontsOnce: Void = {
         let fontNames = ["lmroman10-regular.otf", "lmroman10-bold.otf", "lmmono10-regular.otf"]
         for name in fontNames {
             guard let url = Bundle.main.url(forResource: name, withExtension: nil) else {
@@ -83,6 +78,11 @@ final class NativeRenderer {
             }
             #endif
         }
+    }()
+
+    /// Register bundled OTF fonts for Core Text. Thread-safe; called once at app startup.
+    static func registerFonts() {
+        _ = _fontsOnce
     }
 
     // MARK: - Cached Fonts
