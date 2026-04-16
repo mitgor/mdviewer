@@ -77,6 +77,23 @@ final class WebContentView: NSView, WKScriptMessageHandler {
         webView.loadHTMLString(page, baseURL: resourceURL)
     }
 
+    /// Accept remaining chunks after initial page load (streaming pipeline).
+    /// If firstPaint has already fired, injects chunks immediately.
+    /// Otherwise stores them for injection by the firstPaint handler.
+    func setRemainingChunks(_ chunks: [String], hasMermaid: Bool) {
+        self.remainingChunks = chunks
+        self.hasMermaid = hasMermaid
+        // If firstPaint already fired (small file fast path), inject now
+        if hasProcessedFirstPaint {
+            injectRemainingChunks()
+            if hasMermaid {
+                loadAndInitMermaid()
+            }
+        }
+        // Otherwise, the firstPaint handler (userContentController didReceive)
+        // will call injectRemainingChunks() and loadAndInitMermaid() as it already does.
+    }
+
     func toggleMonospace() {
         isMonospace.toggle()
         webView.evaluateJavaScript("window.toggleMonospace()")
