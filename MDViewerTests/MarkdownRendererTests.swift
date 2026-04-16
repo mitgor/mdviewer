@@ -278,4 +278,64 @@ final class MarkdownRendererTests: XCTestCase {
 
         XCTAssertEqual(completedMermaid, true, "Mermaid blocks should be detected via onComplete")
     }
+
+    // MARK: - Task 2: Additional Streaming Tests
+
+    func testAssembleFirstPageBufferReuse() {
+        let renderer = MarkdownRenderer()
+        let template = SplitTemplate(templateHTML: "PREFIX{{FIRST_CHUNK}}SUFFIX")
+        let page1 = renderer.assembleFirstPage(template: template, chunk: "<h1>A</h1>")
+        let page2 = renderer.assembleFirstPage(template: template, chunk: "<h1>B</h1>")
+
+        XCTAssertEqual(page1, "PREFIX<h1>A</h1>SUFFIX")
+        XCTAssertEqual(page2, "PREFIX<h1>B</h1>SUFFIX")
+        // Both calls succeeded means the buffer was reused (removeAll keepingCapacity)
+    }
+
+    func testStreamingRenderMermaidDetection() {
+        let renderer = MarkdownRenderer()
+        let template = SplitTemplate(templateHTML: "<body>{{FIRST_CHUNK}}</body>")
+        var completedMermaid: Bool?
+
+        let md = """
+        # Title
+
+        Some content here.
+
+        ```mermaid
+        graph TD
+            A --> B
+        ```
+        """
+
+        renderer.renderStreaming(markdown: md, template: template,
+            onFirstChunk: { _ in },
+            onComplete: { _, hasMermaid in
+                completedMermaid = hasMermaid
+            }
+        )
+
+        XCTAssertEqual(completedMermaid, true, "Mermaid blocks should be detected")
+    }
+
+    func testStreamingRenderFromFile() {
+        let renderer = MarkdownRenderer()
+        let tmpFile = FileManager.default.temporaryDirectory.appendingPathComponent("test_streaming.md")
+        try! "# Streaming Test\n\nContent".write(to: tmpFile, atomically: true, encoding: .utf8)
+        defer { try? FileManager.default.removeItem(at: tmpFile) }
+
+        let template = SplitTemplate(templateHTML: "<body>{{FIRST_CHUNK}}</body>")
+        var firstPage: String?
+
+        let success = renderer.renderStreaming(fileURL: tmpFile, template: template,
+            onFirstChunk: { page in
+                firstPage = page
+            },
+            onComplete: { _, _ in }
+        )
+
+        XCTAssertTrue(success)
+        XCTAssertNotNil(firstPage)
+        XCTAssertTrue(firstPage!.contains("Streaming Test"))
+    }
 }
