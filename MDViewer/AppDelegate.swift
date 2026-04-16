@@ -2,13 +2,14 @@ import Cocoa
 import os
 import UniformTypeIdentifiers
 import WebKit
+import cmark_gfm
 
 private let appSignposter = OSSignposter(
     subsystem: "com.mdviewer.app",
     category: "RenderingPipeline"
 )
 
-class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate, NativeContentViewDelegate {
     private let renderer = MarkdownRenderer()
     private var template: SplitTemplate?
     private var windows: [MarkdownWindow] = []
@@ -23,6 +24,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         loadTemplate()
         setupMenu()
+        NativeRenderer.registerFonts()
 
         NSApp.activate(ignoringOtherApps: true)
 
@@ -98,23 +100,63 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
 
     @objc func toggleMonospace(_ sender: Any?) {
         guard let window = NSApp.keyWindow as? MarkdownWindow else { return }
-        (window.contentViewWrapper as? WebContentView)?.toggleMonospace()
+        if let webView = window.webContentView {
+            webView.toggleMonospace()
+        } else if let nativeView = window.nativeContentView {
+            nativeView.toggleMonospace()
+        }
     }
 
     @objc func printDocument(_ sender: Any?) {
         guard let window = NSApp.keyWindow as? MarkdownWindow else { return }
-        (window.contentViewWrapper as? WebContentView)?.printContent(title: window.title)
+        if let webView = window.webContentView {
+            webView.printContent(title: window.title)
+        } else if let nativeView = window.nativeContentView {
+            nativeView.printContent(title: window.title)
+        }
     }
 
     @objc func exportPDF(_ sender: Any?) {
         guard let window = NSApp.keyWindow as? MarkdownWindow else { return }
-        (window.contentViewWrapper as? WebContentView)?.exportPDF(filename: window.title)
+        if let webView = window.webContentView {
+            webView.exportPDF(filename: window.title)
+        } else {
+            // PDF export not available in native path
+            let alert = NSAlert()
+            alert.messageText = "PDF Export Unavailable"
+            alert.informativeText = "PDF export requires the web rendering path. Use View > Toggle Native/Web Rendering first."
+            alert.alertStyle = .informational
+            alert.runModal()
+        }
+    }
+
+    @objc func toggleRenderingMode(_ sender: Any?) {
+        guard let window = NSApp.keyWindow as? MarkdownWindow else { return }
+        let url = window.fileURL
+        let forceNative = !window.isNativeRendering
+        window.close()
+        openFileForced(url, forceNative: forceNative)
     }
 
     // MARK: - WebContentViewDelegate
 
     func webContentViewDidFinishFirstPaint(_ view: WebContentView) {
-        // End the launch-to-paint interval on the very first paint event
+        if !hasCompletedFirstLaunchPaint {
+            hasCompletedFirstLaunchPaint = true
+            launchSignposter.endInterval("launch-to-paint", launchSignpostState)
+        }
+
+        if let paintState = openToPaintStates.removeValue(forKey: ObjectIdentifier(view)) {
+            appSignposter.endInterval("open-to-paint", paintState)
+        }
+        if let window = windows.first(where: { $0.contentViewWrapper === view }) {
+            window.showWithFadeIn()
+        }
+    }
+
+    // MARK: - NativeContentViewDelegate
+
+    func nativeContentViewDidFinishFirstPaint(_ view: NativeContentView) {
         if !hasCompletedFirstLaunchPaint {
             hasCompletedFirstLaunchPaint = true
             launchSignposter.endInterval("launch-to-paint", launchSignpostState)
@@ -145,58 +187,26 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
     }
 
     private func openFile(_ url: URL) {
+        openFileForced(url, forceNative: nil)
+    }
+
+    /// Open a file with optional forced rendering mode.
+    /// - forceNative: nil = auto-detect, true = force native, false = force web
+    private func openFileForced(_ url: URL, forceNative: Bool?) {
         guard let tmpl = template else { return }
         let paintState = appSignposter.beginInterval("open-to-paint")
         pendingFileOpens += 1
 
-        // Parse markdown on background thread with streaming dispatch —
-        // first chunk reaches WKWebView while renderer may still produce remaining chunks
         let renderer = self.renderer
-        var streamContentView: WebContentView?
 
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            let success = renderer.renderStreaming(fileURL: url, template: tmpl,
-                onFirstChunk: { page in
-                    // Called from background thread during C callback —
-                    // dispatch first chunk to main thread immediately (STRM-01)
-                    DispatchQueue.main.async { [weak self] in
-                        guard let self else { return }
-                        let contentView = self.webViewPool.dequeue() ?? WebContentView(frame: .zero)
-                        contentView.delegate = self
-                        contentView.setNavigationDelegate(self) // Monitor active web-process crashes
-                        self.openToPaintStates[ObjectIdentifier(contentView)] = paintState
-                        streamContentView = contentView
+            let spID = renderingSignposter.makeSignpostID()
 
-                        contentView.loadContent(page: page, remainingChunks: [], hasMermaid: false)
-
-                        let window = MarkdownWindow(fileURL: url, contentView: contentView, isNative: false)
-                        self.windows.append(window)
-
-                        NotificationCenter.default.addObserver(
-                            forName: NSWindow.willCloseNotification,
-                            object: window,
-                            queue: .main
-                        ) { [weak self] notification in
-                            guard let closedWindow = notification.object as? MarkdownWindow else { return }
-                            self?.windows.removeAll { $0 === closedWindow }
-                        }
-
-                        window.makeKeyAndOrderFront(nil)
-                        window.alphaValue = 1.0
-                    }
-                },
-                onComplete: { remainingChunks, hasMermaid in
-                    // Called from background thread after all chunks produced
-                    DispatchQueue.main.async { [weak self] in
-                        self?.pendingFileOpens -= 1
-                        streamContentView?.setRemainingChunks(
-                            remainingChunks, hasMermaid: hasMermaid
-                        )
-                    }
-                }
-            )
-
-            if !success {
+            // Read file
+            let readState = renderingSignposter.beginInterval("file-read", id: spID)
+            guard let data = try? Data(contentsOf: url, options: .mappedIfSafe),
+                  let markdown = String(data: data, encoding: .utf8) else {
+                renderingSignposter.endInterval("file-read", readState)
                 DispatchQueue.main.async { [weak self] in
                     self?.pendingFileOpens -= 1
                     appSignposter.endInterval("open-to-paint", paintState)
@@ -206,19 +216,90 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
                     alert.alertStyle = .warning
                     alert.runModal()
                 }
+                return
+            }
+            renderingSignposter.endInterval("file-read", readState)
+
+            // Determine rendering path
+            let useNative: Bool
+            if let forced = forceNative {
+                useNative = forced
+            } else {
+                // Auto-detect: parse AST and scan for tables/mermaid
+                guard let root = renderer.parseMarkdown(markdown) else {
+                    DispatchQueue.main.async { [weak self] in
+                        self?.pendingFileOpens -= 1
+                        appSignposter.endInterval("open-to-paint", paintState)
+                    }
+                    return
+                }
+                useNative = renderer.canRenderNatively(root: root)
+                cmark_node_free(root)
+            }
+
+            if useNative {
+                // Native rendering path (NATV-01)
+                guard let root = renderer.parseMarkdown(markdown) else {
+                    DispatchQueue.main.async { [weak self] in
+                        self?.pendingFileOpens -= 1
+                        appSignposter.endInterval("open-to-paint", paintState)
+                    }
+                    return
+                }
+                let nativeRenderer = NativeRenderer()
+                let nativeResult = nativeRenderer.render(root: root)
+                cmark_node_free(root)
+
+                DispatchQueue.main.async { [weak self] in
+                    guard let self else { return }
+                    self.pendingFileOpens -= 1
+                    let contentView = NativeContentView(frame: .zero)
+                    contentView.delegate = self
+                    self.openToPaintStates[ObjectIdentifier(contentView)] = paintState
+
+                    let window = MarkdownWindow(fileURL: url, contentView: contentView, isNative: true)
+                    self.windows.append(window)
+                    self.observeWindowClose(window)
+
+                    contentView.loadContent(attributedString: nativeResult.attributedString)
+                    // showWithFadeIn called from nativeContentViewDidFinishFirstPaint
+                }
+            } else {
+                // Web rendering path (existing streaming behavior)
+                var streamContentView: WebContentView?
+
+                renderer.renderStreaming(markdown: markdown, template: tmpl,
+                    onFirstChunk: { page in
+                        DispatchQueue.main.async { [weak self] in
+                            guard let self else { return }
+                            let contentView = self.webViewPool.dequeue() ?? WebContentView(frame: .zero)
+                            contentView.delegate = self
+                            contentView.setNavigationDelegate(self)
+                            self.openToPaintStates[ObjectIdentifier(contentView)] = paintState
+                            streamContentView = contentView
+
+                            contentView.loadContent(page: page, remainingChunks: [], hasMermaid: false)
+
+                            let window = MarkdownWindow(fileURL: url, contentView: contentView, isNative: false)
+                            self.windows.append(window)
+                            self.observeWindowClose(window)
+
+                            window.makeKeyAndOrderFront(nil)
+                            window.alphaValue = 1.0
+                        }
+                    },
+                    onComplete: { remainingChunks, hasMermaid in
+                        DispatchQueue.main.async { [weak self] in
+                            self?.pendingFileOpens -= 1
+                            streamContentView?.setRemainingChunks(remainingChunks, hasMermaid: hasMermaid)
+                        }
+                    }
+                )
             }
         }
     }
 
-    private func displayResult(_ result: RenderResult, for url: URL, paintState: OSSignpostIntervalState) {
-        let contentView = webViewPool.dequeue() ?? WebContentView(frame: .zero)
-        contentView.delegate = self
-        contentView.setNavigationDelegate(self) // Monitor active web-process crashes
-        openToPaintStates[ObjectIdentifier(contentView)] = paintState
-
-        let window = MarkdownWindow(fileURL: url, contentView: contentView, isNative: false)
-        windows.append(window)
-
+    private func observeWindowClose(_ window: MarkdownWindow) {
         NotificationCenter.default.addObserver(
             forName: NSWindow.willCloseNotification,
             object: window,
@@ -227,14 +308,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
             guard let closedWindow = notification.object as? MarkdownWindow else { return }
             self?.windows.removeAll { $0 === closedWindow }
         }
-
-        contentView.loadContent(
-            page: result.page,
-            remainingChunks: result.remainingChunks,
-            hasMermaid: result.hasMermaid
-        )
-        window.makeKeyAndOrderFront(nil)
-        window.alphaValue = 1.0
     }
 
     private func setupMenu() {
@@ -262,6 +335,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate {
         let viewMenuItem = NSMenuItem()
         let viewMenu = NSMenu(title: "View")
         viewMenu.addItem(withTitle: "Toggle Monospace", action: #selector(toggleMonospace(_:)), keyEquivalent: "m")
+        viewMenu.addItem(withTitle: "Toggle Native/Web Rendering", action: #selector(toggleRenderingMode(_:)), keyEquivalent: "N")
         viewMenuItem.submenu = viewMenu
         mainMenu.addItem(viewMenuItem)
 
