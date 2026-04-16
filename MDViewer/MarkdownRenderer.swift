@@ -33,28 +33,88 @@ let renderingSignposter = OSSignposter(
 final class MarkdownRenderer {
     private let chunkByteLimit = 64 * 1024
 
-    private static let mermaidRegex = try! NSRegularExpression(
-        pattern: #"<pre><code class="language-mermaid">([\s\S]*?)</code></pre>"#
-    )
-    private static let blockTagRegex = try! NSRegularExpression(
-        pattern: #"<(?:p|h[1-6]|div|pre|blockquote|table|ul|ol|hr|li)[\s>]"#
-    )
+    // CMARK-05: Cached extension pointers (looked up once at init)
+    private let cachedExtList: UnsafeMutablePointer<cmark_llist>?
 
     init() {
         cmark_gfm_core_extensions_ensure_registered()
+        let extNames = ["table", "strikethrough", "autolink", "tasklist"]
+        var list: UnsafeMutablePointer<cmark_llist>? = nil
+        for name in extNames {
+            if let e = cmark_find_syntax_extension(name) {
+                list = cmark_llist_append(
+                    cmark_get_default_mem_allocator(), list,
+                    UnsafeMutableRawPointer(e))
+            }
+        }
+        self.cachedExtList = list
+    }
+
+    deinit {
+        if let list = cachedExtList {
+            cmark_llist_free(cmark_get_default_mem_allocator(), list)
+        }
     }
 
     func render(markdown: String) -> (chunks: [String], hasMermaid: Bool) {
-        let html = parseMarkdownToHTML(markdown)
-        let (processed, hasMermaid) = processMermaidBlocks(html)
-        return (chunkHTML(processed), hasMermaid)
+        let options: Int32 = CMARK_OPT_SMART | CMARK_OPT_UNSAFE
+
+        guard let parser = cmark_parser_new(options) else {
+            return (["<p>Failed to create parser.</p>"], false)
+        }
+        defer { cmark_parser_free(parser) }
+
+        // Attach extensions to parser (parser stores pointers, does not take ownership)
+        let extNames = ["table", "strikethrough", "autolink", "tasklist"]
+        for name in extNames {
+            if let e = cmark_find_syntax_extension(name) {
+                cmark_parser_attach_syntax_extension(parser, e)
+            }
+        }
+
+        cmark_parser_feed(parser, markdown, markdown.utf8.count)
+        guard let root = cmark_parser_finish(parser) else {
+            return (["<p>Failed to parse markdown.</p>"], false)
+        }
+        defer { cmark_node_free(root) }
+
+        // Use chunked callback API (CMARK-04)
+        let ctx = ChunkedRenderContext()
+        let ctxPtr = Unmanaged.passRetained(ctx).toOpaque()
+        defer { Unmanaged<ChunkedRenderContext>.fromOpaque(ctxPtr).release() }
+
+        cmark_render_html_chunked(
+            root, options, cachedExtList,
+            cmark_get_default_mem_allocator(),
+            chunkByteLimit,
+            { (data, len, isLast, hasMermaid, userdata) -> Int32 in
+                guard let data = data, let userdata = userdata else { return 1 }
+                let ctx = Unmanaged<ChunkedRenderContext>
+                    .fromOpaque(userdata).takeUnretainedValue()
+                if len > 0 {
+                    let chunk = String(
+                        decoding: UnsafeBufferPointer(
+                            start: UnsafeRawPointer(data)
+                                .assumingMemoryBound(to: UInt8.self),
+                            count: len
+                        ),
+                        as: UTF8.self
+                    )
+                    ctx.chunks.append(chunk)
+                }
+                if hasMermaid != 0 { ctx.hasMermaid = true }
+                return 0
+            },
+            ctxPtr
+        )
+
+        return (ctx.chunks.isEmpty ? [""] : ctx.chunks, ctx.hasMermaid)
     }
 
     func renderFullPage(markdown: String, template: SplitTemplate) -> RenderResult {
         let (chunks, hasMermaid) = render(markdown: markdown)
         let firstChunk = chunks.first ?? ""
         let remaining = Array(chunks.dropFirst())
-        // Direct concatenation — no string scanning
         let page = template.prefix + firstChunk + template.suffix
         return RenderResult(page: page, remainingChunks: remaining, hasMermaid: hasMermaid)
     }
@@ -62,7 +122,6 @@ final class MarkdownRenderer {
     func renderFullPage(fileURL: URL, template: SplitTemplate) -> RenderResult? {
         let spID = renderingSignposter.makeSignpostID()
 
-        // File read interval
         let readState = renderingSignposter.beginInterval("file-read", id: spID)
         guard let data = try? Data(contentsOf: fileURL, options: .mappedIfSafe),
               let markdown = String(data: data, encoding: .utf8) else {
@@ -71,154 +130,19 @@ final class MarkdownRenderer {
         }
         renderingSignposter.endInterval("file-read", readState)
 
-        // Parse interval
-        let parseState = renderingSignposter.beginInterval("parse", id: spID)
-        let html = parseMarkdownToHTML(markdown)
-        renderingSignposter.endInterval("parse", parseState)
-
-        // Chunk-split interval
-        let chunkState = renderingSignposter.beginInterval("chunk-split", id: spID)
-        let (processed, hasMermaid) = processMermaidBlocks(html)
-        let chunks = chunkHTML(processed)
-        renderingSignposter.endInterval("chunk-split", chunkState)
+        let parseState = renderingSignposter.beginInterval("parse+chunk", id: spID)
+        let (chunks, hasMermaid) = render(markdown: markdown)
+        renderingSignposter.endInterval("parse+chunk", parseState)
 
         let firstChunk = chunks.first ?? ""
         let remaining = Array(chunks.dropFirst())
         let page = template.prefix + firstChunk + template.suffix
         return RenderResult(page: page, remainingChunks: remaining, hasMermaid: hasMermaid)
     }
+}
 
-    // MARK: - Private
-
-    private func parseMarkdownToHTML(_ markdown: String) -> String {
-        let options: Int32 = CMARK_OPT_SMART | CMARK_OPT_UNSAFE
-
-        guard let parser = cmark_parser_new(options) else {
-            return "<p>Failed to create parser.</p>"
-        }
-        defer { cmark_parser_free(parser) }
-
-        let extensions = ["table", "strikethrough", "autolink", "tasklist"]
-        for ext in extensions {
-            if let e = cmark_find_syntax_extension(ext) {
-                cmark_parser_attach_syntax_extension(parser, e)
-            }
-        }
-
-        cmark_parser_feed(parser, markdown, markdown.utf8.count)
-        guard let root = cmark_parser_finish(parser) else {
-            return "<p>Failed to parse markdown.</p>"
-        }
-        defer { cmark_node_free(root) }
-
-        var extList: UnsafeMutablePointer<cmark_llist>? = nil
-        for ext in extensions {
-            if let e = cmark_find_syntax_extension(ext) {
-                extList = cmark_llist_append(cmark_get_default_mem_allocator(), extList, UnsafeMutableRawPointer(e))
-            }
-        }
-
-        guard let htmlCStr = cmark_render_html_with_mem(root, options, extList, cmark_get_default_mem_allocator()) else {
-            return "<p>Failed to render HTML.</p>"
-        }
-        defer { free(htmlCStr) }
-
-        return String(cString: htmlCStr)
-    }
-
-    private func processMermaidBlocks(_ html: String) -> (String, Bool) {
-        let nsString = html as NSString
-        let matches = Self.mermaidRegex.matches(in: html, range: NSRange(location: 0, length: nsString.length))
-        guard !matches.isEmpty else { return (html, false) }
-
-        var result = html
-        for match in matches.reversed() {
-            let fullRange = match.range
-            let codeRange = match.range(at: 1)
-            let mermaidSource = nsString.substring(with: codeRange)
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-
-            let decoded = decodeHTMLEntities(mermaidSource)
-            let encoded = encodeHTMLEntities(decoded)
-
-            let placeholder = """
-            <div class="mermaid-placeholder" data-mermaid-source="\(encoded)">
-                <span style="color:#999;font-size:0.9em;">Loading diagram...</span>
-            </div>
-            """
-
-            result = (result as NSString).replacingCharacters(in: fullRange, with: placeholder)
-        }
-
-        return (result, true)
-    }
-
-    private func decodeHTMLEntities(_ input: String) -> String {
-        var result = input
-        result = result.replacingOccurrences(of: "&lt;", with: "<")
-        result = result.replacingOccurrences(of: "&gt;", with: ">")
-        result = result.replacingOccurrences(of: "&quot;", with: "\"")
-        result = result.replacingOccurrences(of: "&amp;", with: "&")
-        return result
-    }
-
-    private func encodeHTMLEntities(_ input: String) -> String {
-        var result = ""
-        result.reserveCapacity(input.count + input.count / 8)
-        for char in input {
-            switch char {
-            case "&":  result += "&amp;"
-            case "\"": result += "&quot;"
-            case "<":  result += "&lt;"
-            case ">":  result += "&gt;"
-            default:   result.append(char)
-            }
-        }
-        return result
-    }
-
-    private func chunkHTML(_ html: String) -> [String] {
-        let nsString = html as NSString
-        let length = nsString.length
-
-        let matches = Self.blockTagRegex.matches(
-            in: html,
-            range: NSRange(location: 0, length: length)
-        )
-
-        // No block tags or small content: single chunk
-        guard !matches.isEmpty else { return [html] }
-
-        // Check if entire content fits in one chunk
-        if html.utf8.count <= chunkByteLimit {
-            return [html]
-        }
-
-        var chunks: [String] = []
-        var chunkStart = 0
-
-        for i in 1..<matches.count {
-            let pos = matches[i].range.location
-            let candidateRange = NSRange(location: chunkStart, length: pos - chunkStart)
-            let candidate = nsString.substring(with: candidateRange)
-
-            if candidate.utf8.count > chunkByteLimit {
-                // Current accumulation exceeds limit.
-                // Split at the previous block tag (matches[i-1]).
-                let prevPos = matches[i - 1].range.location
-                if prevPos > chunkStart {
-                    let chunkRange = NSRange(location: chunkStart, length: prevPos - chunkStart)
-                    chunks.append(nsString.substring(with: chunkRange))
-                    chunkStart = prevPos
-                }
-            }
-        }
-
-        // Append remaining
-        if chunkStart < length {
-            chunks.append(nsString.substring(from: chunkStart))
-        }
-
-        return chunks.isEmpty ? [html] : chunks
-    }
+/// Context object passed through the C callback via Unmanaged pointer.
+private final class ChunkedRenderContext {
+    var chunks: [String] = []
+    var hasMermaid: Bool = false
 }
