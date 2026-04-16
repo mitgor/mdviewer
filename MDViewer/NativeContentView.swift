@@ -92,8 +92,13 @@ final class NativeContentView: NSView {
     /// the cachedAttributedString is stored so re-rendering can happen
     /// when the toggle is connected to NativeRenderer.
     func toggleMonospace() {
-        isMonospace.toggle()
-        // Will be wired to NativeRenderer re-render in Plan 02
+        // Monospace re-rendering not yet implemented for native path (Plan 02).
+        // Show informational alert so the user knows the action had no effect.
+        let alert = NSAlert()
+        alert.messageText = "Monospace Toggle Unavailable"
+        alert.informativeText = "Monospace toggle is not yet supported in native rendering mode."
+        alert.alertStyle = .informational
+        alert.runModal()
     }
 
     // MARK: - Print Support
