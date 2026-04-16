@@ -27,15 +27,20 @@ Open a markdown file and see beautifully rendered content instantly — sub-200m
 - ✓ Background thread markdown parsing — v1
 - ✓ Cached regex patterns and single-pass entity encoding — v1
 - ✓ Batched JS chunk injection — v1
+- ✓ Stream large files (10MB+) via memory-mapped read — v2.0
+- ✓ N-chunk progressive rendering (≤64KB block boundaries) — v2.0
+- ✓ Reduced per-window memory (Mermaid script-src, WKWebView retain fix) — v2.0
+- ✓ Per-file window position persistence — v2.0
+- ✓ Window cascading for multiple files — v2.0
 
 ### Active
 
-- [ ] Sub-100ms launch to first visible content — deferred to future milestone (184.50ms measured on M4 Max with pre-warm active)
-- [x] Stream large files (10MB+) without loading entire file into memory — Phase 2 (memory-mapped read via mappedIfSafe)
-- [x] N-chunk progressive rendering (currently limited to 2 chunks) — Phase 2 (byte-size splitting at ≤64KB block boundaries)
-- [x] Reduce per-window memory footprint — Phase 4 (Mermaid script-src loading eliminates 3MB IPC per window; Phase 1 fixed WKWebView retain cycle)
-- [x] Fix window position persistence — Phase 5 (per-file setFrameAutosaveName with URL-derived keys)
-- [x] Proper window cascading for multiple files — Phase 5 (cascadeTopLeft with lastCascadePoint tracking)
+- [ ] Vendor swift-cmark with direct-to-chunk AST output — skip regex-based HTML chunking
+- [ ] WKWebView warm pool (2-3 pre-warmed views) — eliminate init cost for 2nd+ file
+- [ ] Streaming parse pipeline — incremental cmark feed with early first-screen emit
+- [ ] Zero-copy C-to-JS string bridge — eliminate intermediate Swift String allocations
+- [ ] Native NSTextView rendering for mermaid-free files — bypass WKWebView entirely
+- [ ] Sub-100ms launch to first visible content (184.50ms measured on M4 Max with pre-warm active)
 
 ### Out of Scope
 
@@ -44,6 +49,17 @@ Open a markdown file and see beautifully rendered content instantly — sub-200m
 - File watching / live reload — quick preview tool, not a working reference
 - Tabs / multi-document interface — one window per file is simpler
 - Preferences window — no settings to persist
+
+## Current Milestone: v2.1 Deep Optimization
+
+**Goal:** Dramatically reduce launch-to-paint time through architectural optimizations — vendored cmark, WKWebView pooling, streaming pipeline, zero-copy bridging, and native text rendering.
+
+**Target features:**
+- Vendor swift-cmark with direct-to-chunk AST output
+- WKWebView warm pool (2-3 pre-warmed views)
+- Streaming parse pipeline (incremental feed, early first-screen emit)
+- Zero-copy C-to-JS string bridge
+- Native NSTextView rendering for mermaid-free files
 
 ## Context
 
@@ -93,4 +109,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-07 after Phase 5 — window management complete (v2.0 milestone finished)*
+*Last updated: 2026-04-16 after milestone v2.1 started — deep optimization*
