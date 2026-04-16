@@ -77,6 +77,7 @@
 		C132C89618EB67C1E87ABEA5 /* cmark-gfm-core-extensions.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 7E095EEFDEA2BD1C2A9E3839 /* cmark-gfm-core-extensions.h */; };
 		C592B5A55390B5133395E951 /* syntax_extension.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = A2590F186300F99FD65BA27A /* syntax_extension.h */; };
 		C74D71EFA9F3755A95AE1D8E /* inlines.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 79C4B55644D2C3FBF14A0522 /* inlines.h */; };
+		CBDB52C13252B8727ED7A668 /* NativeContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3B1942362737FFA70EF24DF /* NativeContentView.swift */; };
 		CE64B1CE881D4189FCFB30FF /* blocks.c in Sources */ = {isa = PBXBuildFile; fileRef = D132BC05379637B74075625F /* blocks.c */; };
 		D05282E5E5D0600398075C56 /* utf8.c in Sources */ = {isa = PBXBuildFile; fileRef = FDC5253F6A23AAAFCB99E618 /* utf8.c */; };
 		D4ECCD6B96951308112E183B /* references.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2C55CBE2F371713BBDAAFC0D /* references.h */; };
@@ -272,6 +273,7 @@
 		CD6D3207B26CDC75256511C6 /* config.h.in */ = {isa = PBXFileReference; path = config.h.in; sourceTree = "<group>"; };
 		D019F975282AA36B0F0162B9 /* linked_list.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = linked_list.c; sourceTree = "<group>"; };
 		D132BC05379637B74075625F /* blocks.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = blocks.c; sourceTree = "<group>"; };
+		D3B1942362737FFA70EF24DF /* NativeContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeContentView.swift; sourceTree = "<group>"; };
 		DDA5BECA16DF1A41F2A47945 /* html.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = html.h; sourceTree = "<group>"; };
 		DFF027985A95B9138CF028F0 /* autolink.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = autolink.c; sourceTree = "<group>"; };
 		E0D1B042A42F3657CBCE0C4C /* module.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.modulemap; sourceTree = "<group>"; };
@@ -439,6 +441,7 @@
 				A8416F124345CD28D11536DF /* main.swift */,
 				3D8C8063C77E20F0BC3241C6 /* MarkdownRenderer.swift */,
 				3D77E35CF5D4FF0D355944C7 /* MarkdownWindow.swift */,
+				D3B1942362737FFA70EF24DF /* NativeContentView.swift */,
 				A5DA437ACC24DABEFF581D49 /* NativeRenderer.swift */,
 				1966ECECAAAD4198ECD170A7 /* PDFPrintView.swift */,
 				12A2FA1D55D58A86D56FE54C /* WebContentView.swift */,
@@ -642,6 +645,7 @@
 				0A48E6DEF5C82CA973975264 /* AppDelegate.swift in Sources */,
 				520181ED43CADA1D3AAF889F /* MarkdownRenderer.swift in Sources */,
 				43E471432CED94DEC9D5EFB5 /* MarkdownWindow.swift in Sources */,
+				CBDB52C13252B8727ED7A668 /* NativeContentView.swift in Sources */,
 				5C346424520D84551BED49D2 /* NativeRenderer.swift in Sources */,
 				29ED46390C47B842EB878313 /* PDFPrintView.swift in Sources */,
 				FE8BA6FE29B7B5A44C408F94 /* WebContentView.swift in Sources */,
