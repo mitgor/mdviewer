@@ -222,6 +222,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate, Nati
 
             // Determine rendering path
             let useNative: Bool
+            var detectedRoot: UnsafeMutablePointer<cmark_node>? = nil
             if let forced = forceNative {
                 useNative = forced
             } else {
@@ -234,17 +235,29 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate, Nati
                     return
                 }
                 useNative = renderer.canRenderNatively(root: root)
-                cmark_node_free(root)
+                if useNative {
+                    // Retain root for native rendering -- avoid double parse
+                    detectedRoot = root
+                } else {
+                    cmark_node_free(root)
+                }
             }
 
             if useNative {
                 // Native rendering path (NATV-01)
-                guard let root = renderer.parseMarkdown(markdown) else {
-                    DispatchQueue.main.async { [weak self] in
-                        self?.pendingFileOpens -= 1
-                        appSignposter.endInterval("open-to-paint", paintState)
+                // Reuse AST from auto-detect when available, otherwise parse fresh
+                let root: UnsafeMutablePointer<cmark_node>
+                if let existing = detectedRoot {
+                    root = existing
+                } else {
+                    guard let parsed = renderer.parseMarkdown(markdown) else {
+                        DispatchQueue.main.async { [weak self] in
+                            self?.pendingFileOpens -= 1
+                            appSignposter.endInterval("open-to-paint", paintState)
+                        }
+                        return
                     }
-                    return
+                    root = parsed
                 }
                 let nativeRenderer = NativeRenderer()
                 let nativeResult = nativeRenderer.render(root: root)
