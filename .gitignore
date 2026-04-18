@@ -1,8 +1,8 @@
 .DS_Store
 build/
 DerivedData/
-*.xcuserdata
-*.xcworkspacedata
+xcuserdata/
+*.xcuserstate
 .superpowers/
 /tmp/
 dist/
