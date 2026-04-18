@@ -32,15 +32,15 @@ Open a markdown file and see beautifully rendered content instantly — sub-200m
 - ✓ Reduced per-window memory (Mermaid script-src, WKWebView retain fix) — v2.0
 - ✓ Per-file window position persistence — v2.0
 - ✓ Window cascading for multiple files — v2.0
+- ✓ Vendored cmark-gfm with chunked HTML callback API — v2.1 Phase 6
+- ✓ WKWebView warm pool (capacity 2, async replenishment, crash recovery) — v2.1 Phase 7
+- ✓ Streaming parse-to-render pipeline with buffer-reuse first-page assembly — v2.1 Phase 8
+- ✓ Native NSTextView backend (AST → NSAttributedString) for mermaid/table-free files — v2.1 Phase 9
+- ✓ Signed Developer ID + notarized DMG release pipeline — v2.1 release
 
 ### Active
 
-- [x] Vendor swift-cmark with direct-to-chunk AST output — Phase 6 (chunked callback API, C-level mermaid detection, human verification pending)
-- [x] WKWebView warm pool (2 pre-warmed views) — Phase 7 (pool with async replenishment, crash recovery, open panel termination fix)
-- [x] Streaming parse pipeline — Phase 8 (first chunk dispatched mid-render, buffer-reuse template assembly, signpost instrumentation)
-- [ ] Zero-copy C-to-JS string bridge — eliminate intermediate Swift String allocations
-- [x] Native NSTextView rendering for mermaid-free files — Phase 9 (AST→NSAttributedString walker, OTF fonts, routing, toggle menu)
-- [ ] Sub-100ms launch to first visible content (184.50ms measured on M4 Max with pre-warm active)
+_None. v2.1 shipped 2026-04-18; no milestone currently active._
 
 ### Out of Scope
 
@@ -49,17 +49,25 @@ Open a markdown file and see beautifully rendered content instantly — sub-200m
 - File watching / live reload — quick preview tool, not a working reference
 - Tabs / multi-document interface — one window per file is simpler
 - Preferences window — no settings to persist
+- Zero-copy C-to-JS string bridge — Phase 8 research showed <0.1ms cost; IPC boundary is the real bottleneck
+- Incremental cmark parsing — `cmark_parser_finish()` required before AST access; streaming must be post-parse
 
-## Current Milestone: v2.1 Deep Optimization
+## Current State
 
-**Goal:** Dramatically reduce launch-to-paint time through architectural optimizations — vendored cmark, WKWebView pooling, streaming pipeline, zero-copy bridging, and native text rendering.
+**Shipped:** v2.1 Deep Optimization (2026-04-18) — [Release](https://github.com/mitgor/mdviewer/releases/tag/v2.1).
 
-**Target features:**
-- Vendor swift-cmark with direct-to-chunk AST output
-- WKWebView warm pool (2-3 pre-warmed views)
-- Streaming parse pipeline (incremental feed, early first-screen emit)
-- Zero-copy C-to-JS string bridge
-- Native NSTextView rendering for mermaid-free files
+v2.1 archives: [`milestones/v2.1-ROADMAP.md`](milestones/v2.1-ROADMAP.md) · [`milestones/v2.1-REQUIREMENTS.md`](milestones/v2.1-REQUIREMENTS.md).
+
+### Open Concerns (candidates for next milestone)
+
+- **Sub-100ms warm launch** — target from v2.1 is instrumented but not yet measured on the shipped build. Last recorded measurement was 184.50ms on M4 Max pre-v2.1. The path is `OSSignposter(open-to-paint)`; run under Instruments.
+- **Deferred human verification** — 2 UAT scenarios (phase 7, 8) and 4 VERIFICATION sign-offs (phases 6–9) acknowledged at close; see [`STATE.md`](STATE.md) Deferred Items.
+- **No release automation** — the archive/sign/notarize/DMG/publish flow runs manually on the developer Mac. A GitHub Actions workflow would make releases one-click.
+- **v2.0 phase docs cleanup** — phases 01–05 directories were partially deleted from the working tree during v2.1 but never formally archived to `milestones/v2.0-ROADMAP.md`.
+
+## Current Milestone
+
+_None active. Run `/gsd-new-milestone` to scope v2.2._
 
 ## Context
 
@@ -113,4 +121,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-16 after Phase 9 — native text rendering complete (last phase of v2.1 milestone)*
+*Last updated: 2026-04-18 after v2.1 milestone close (phases 06–09 shipped as [v2.1 release](https://github.com/mitgor/mdviewer/releases/tag/v2.1)).*
