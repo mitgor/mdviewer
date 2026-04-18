@@ -45,7 +45,7 @@ None.
 
 - **Sub-100ms warm launch target** from v2.1 is instrumented but not yet measured on the shipped build. Last recorded measurement was 184.50ms on M4 Max pre-v2.1.
 - v2.1 closed with 6 deferred human-verification items (see below) that should be walked through when convenient.
-- **v2.0 phase directories (01–05)** were partially deleted from the working tree during v2.1 but never formally archived. Outstanding cleanup: either restore and archive via `milestones/v2.0-ROADMAP.md`, or commit the deletions and rely on git history for the v2.0 artifact trail.
+- *(resolved 2026-04-18)* v2.0 phase directories archived to `milestones/v2.0-*.md` and removed from working tree; git history retains the full per-phase artifacts.
 
 ## Deferred Items
 

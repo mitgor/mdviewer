@@ -3,7 +3,7 @@
 | Version | Name | Shipped | Phases | Archive |
 |---------|------|---------|--------|---------|
 | v2.1 | Deep Optimization | 2026-04-18 | 06–09 | [v2.1-ROADMAP.md](milestones/v2.1-ROADMAP.md) · [v2.1-REQUIREMENTS.md](milestones/v2.1-REQUIREMENTS.md) |
-| v2.0 | Speed & Memory | 2026-04-16 | 01–05 | *(phase docs in git history; not yet formally archived to `milestones/`)* |
+| v2.0 | Speed & Memory | 2026-04-16 | 01–05 | [v2.0-ROADMAP.md](milestones/v2.0-ROADMAP.md) · [v2.0-REQUIREMENTS.md](milestones/v2.0-REQUIREMENTS.md) |
 
 ## v2.1 — Deep Optimization
 

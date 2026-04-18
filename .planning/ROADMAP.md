@@ -7,7 +7,7 @@
 ## Shipped Milestones
 
 - **v2.1 Deep Optimization** — Phases 06–09, shipped 2026-04-18. See [milestones/v2.1-ROADMAP.md](milestones/v2.1-ROADMAP.md).
-- **v2.0 Speed & Memory** — Phases 01–05, shipped 2026-04-16. (Phase docs live in git history under `.planning/phases/01-05-*`; not yet formally archived to `milestones/`.)
+- **v2.0 Speed & Memory** — Phases 01–05, shipped 2026-04-16. See [milestones/v2.0-ROADMAP.md](milestones/v2.0-ROADMAP.md).
 
 See [MILESTONES.md](MILESTONES.md) for the index.
 

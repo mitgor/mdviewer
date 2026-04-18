@@ -63,7 +63,7 @@ v2.1 archives: [`milestones/v2.1-ROADMAP.md`](milestones/v2.1-ROADMAP.md) · [`m
 - **Sub-100ms warm launch** — target from v2.1 is instrumented but not yet measured on the shipped build. Last recorded measurement was 184.50ms on M4 Max pre-v2.1. The path is `OSSignposter(open-to-paint)`; run under Instruments.
 - **Deferred human verification** — 2 UAT scenarios (phase 7, 8) and 4 VERIFICATION sign-offs (phases 6–9) acknowledged at close; see [`STATE.md`](STATE.md) Deferred Items.
 - **No release automation** — the archive/sign/notarize/DMG/publish flow runs manually on the developer Mac. A GitHub Actions workflow would make releases one-click.
-- **v2.0 phase docs cleanup** — phases 01–05 directories were partially deleted from the working tree during v2.1 but never formally archived to `milestones/v2.0-ROADMAP.md`.
+- *(resolved 2026-04-18)* v2.0 phases 01–05 archived retrospectively to [`milestones/v2.0-ROADMAP.md`](milestones/v2.0-ROADMAP.md) and [`milestones/v2.0-REQUIREMENTS.md`](milestones/v2.0-REQUIREMENTS.md). Phase directories removed from working tree; content retained in git history.
 
 ## Current Milestone
 
