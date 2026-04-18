@@ -5,3 +5,4 @@ DerivedData/
 *.xcworkspacedata
 .superpowers/
 /tmp/
+dist/
