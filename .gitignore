@@ -6,3 +6,7 @@ xcuserdata/
 .superpowers/
 /tmp/
 dist/
+.claude/
+/MDViewer.app/
+*.profraw
+/Screenshot*.png

@@ -203,7 +203,7 @@
 		12A2FA1D55D58A86D56FE54C /* WebContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebContentView.swift; sourceTree = "<group>"; };
 		12B65DE29A00743FE763ADF7 /* mermaid.min.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = mermaid.min.js; sourceTree = "<group>"; };
 		15279E3385AB50AD0192F26F /* lmmono10-regular.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "lmmono10-regular.otf"; sourceTree = "<group>"; };
-		15338C6C0AA8B9E06156B705 /* libcmark-gfm.pc.in */ = {isa = PBXFileReference; path = "libcmark-gfm.pc.in"; sourceTree = "<group>"; };
+		15338C6C0AA8B9E06156B705 /* libcmark-gfm.pc.in */ = {isa = PBXFileReference; lastKnownFileType = text; path = "libcmark-gfm.pc.in"; sourceTree = "<group>"; };
 		15BEFC1F83C7341D3970B4FA /* registry.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = registry.c; sourceTree = "<group>"; };
 		1966ECECAAAD4198ECD170A7 /* PDFPrintView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFPrintView.swift; sourceTree = "<group>"; };
 		1EB6A95B3025AA32EC03FDBE /* MDViewerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MDViewerTests.swift; sourceTree = "<group>"; };
@@ -215,14 +215,14 @@
 		2BFF53B4ABB3758CB407EBF7 /* utf8.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = utf8.h; sourceTree = "<group>"; };
 		2C55CBE2F371713BBDAAFC0D /* references.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = references.h; sourceTree = "<group>"; };
 		2D433D07AADF81B8CA7A637A /* strikethrough.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = strikethrough.c; sourceTree = "<group>"; };
-		2E4B1912CD2A98FD0E31BBBD /* lmroman10-regular.woff2 */ = {isa = PBXFileReference; path = "lmroman10-regular.woff2"; sourceTree = "<group>"; };
+		2E4B1912CD2A98FD0E31BBBD /* lmroman10-regular.woff2 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "lmroman10-regular.woff2"; sourceTree = "<group>"; };
 		2E8FA1308E0AE89003ACA17F /* tasklist.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = tasklist.h; sourceTree = "<group>"; };
 		391ABC8D7FA696578B1FA85A /* cmark-gfm-extension_api.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "cmark-gfm-extension_api.h"; sourceTree = "<group>"; };
 		3A20D4FB6BB0F20158A1AA80 /* buffer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = buffer.h; sourceTree = "<group>"; };
 		3D77E35CF5D4FF0D355944C7 /* MarkdownWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownWindow.swift; sourceTree = "<group>"; };
 		3D8C8063C77E20F0BC3241C6 /* MarkdownRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownRenderer.swift; sourceTree = "<group>"; };
-		413A4943F775F786D86100E6 /* lmroman10-bold.woff2 */ = {isa = PBXFileReference; path = "lmroman10-bold.woff2"; sourceTree = "<group>"; };
-		41FB994237F57167AA74856D /* lmmono10-regular.woff2 */ = {isa = PBXFileReference; path = "lmmono10-regular.woff2"; sourceTree = "<group>"; };
+		413A4943F775F786D86100E6 /* lmroman10-bold.woff2 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "lmroman10-bold.woff2"; sourceTree = "<group>"; };
+		41FB994237F57167AA74856D /* lmmono10-regular.woff2 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "lmmono10-regular.woff2"; sourceTree = "<group>"; };
 		44827793B4ABD0BAEA6167CD /* ext_scanners.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ext_scanners.c; sourceTree = "<group>"; };
 		4BE4E5F5DFADA92482F9B36A /* scanners.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = scanners.h; sourceTree = "<group>"; };
 		50D0F6A346B9454AA23C3ADE /* iterator.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = iterator.c; sourceTree = "<group>"; };
@@ -258,8 +258,8 @@
 		A3E1FE7ED1D027247B367AEE /* html.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = html.c; sourceTree = "<group>"; };
 		A5DA437ACC24DABEFF581D49 /* NativeRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeRenderer.swift; sourceTree = "<group>"; };
 		A8416F124345CD28D11536DF /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
-		A9735715AEEF674CD09CF3AA /* scanners.re */ = {isa = PBXFileReference; path = scanners.re; sourceTree = "<group>"; };
-		AA7318485AA6C130EEF59D7F /* ext_scanners.re */ = {isa = PBXFileReference; path = ext_scanners.re; sourceTree = "<group>"; };
+		A9735715AEEF674CD09CF3AA /* scanners.re */ = {isa = PBXFileReference; lastKnownFileType = text; path = scanners.re; sourceTree = "<group>"; };
+		AA7318485AA6C130EEF59D7F /* ext_scanners.re */ = {isa = PBXFileReference; lastKnownFileType = text; path = ext_scanners.re; sourceTree = "<group>"; };
 		ADB36FF70D2B09CE25EDA8EA /* houdini_href_e.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = houdini_href_e.c; sourceTree = "<group>"; };
 		AE7B05EF107529DC66F8EC96 /* node.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = node.h; sourceTree = "<group>"; };
 		AFA7FC79F4063BF333D15247 /* houdini_html_e.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = houdini_html_e.c; sourceTree = "<group>"; };
@@ -272,7 +272,7 @@
 		C5088940F257A1AB84A3B8FD /* tagfilter.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = tagfilter.c; sourceTree = "<group>"; };
 		C8E72420904BAD34AB917A13 /* template.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = template.html; sourceTree = "<group>"; };
 		CC4CD349CC5CAF7CE359B358 /* CMakeLists.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
-		CD6D3207B26CDC75256511C6 /* config.h.in */ = {isa = PBXFileReference; path = config.h.in; sourceTree = "<group>"; };
+		CD6D3207B26CDC75256511C6 /* config.h.in */ = {isa = PBXFileReference; lastKnownFileType = text; path = config.h.in; sourceTree = "<group>"; };
 		D019F975282AA36B0F0162B9 /* linked_list.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = linked_list.c; sourceTree = "<group>"; };
 		D132BC05379637B74075625F /* blocks.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = blocks.c; sourceTree = "<group>"; };
 		D3B1942362737FFA70EF24DF /* NativeContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeContentView.swift; sourceTree = "<group>"; };
@@ -575,8 +575,6 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
-				TargetAttributes = {
-				};
 			};
 			buildConfigurationList = 143BBF338B8553C13608D81A /* Build configuration list for PBXProject "MDViewer" */;
 			developmentRegion = en;
@@ -863,7 +861,17 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				AUTOMATION_APPLE_EVENTS = NO;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "3rd Party Mac Developer Application";
 				COMBINE_HIDPI_IMAGES = YES;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = V7YK72YLFF;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = NO;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/Vendor/cmark-gfm/src/include",
 					"$(SRCROOT)/Vendor/cmark-gfm/extensions/include",
@@ -878,6 +886,12 @@
 					"-ObjC",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.mdviewer.app;
+				RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = NO;
+				RUNTIME_EXCEPTION_ALLOW_JIT = NO;
+				RUNTIME_EXCEPTION_ALLOW_UNSIGNED_EXECUTABLE_MEMORY = NO;
+				RUNTIME_EXCEPTION_DEBUGGING_TOOL = NO;
+				RUNTIME_EXCEPTION_DISABLE_EXECUTABLE_PAGE_PROTECTION = NO;
+				RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = NO;
 				SDKROOT = macosx;
 			};
 			name = Release;
@@ -1010,7 +1024,17 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				AUTOMATION_APPLE_EVENTS = NO;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "3rd Party Mac Developer Application";
 				COMBINE_HIDPI_IMAGES = YES;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = V7YK72YLFF;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = NO;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/Vendor/cmark-gfm/src/include",
 					"$(SRCROOT)/Vendor/cmark-gfm/extensions/include",
@@ -1025,6 +1049,12 @@
 					"-ObjC",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.mdviewer.app;
+				RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = NO;
+				RUNTIME_EXCEPTION_ALLOW_JIT = NO;
+				RUNTIME_EXCEPTION_ALLOW_UNSIGNED_EXECUTABLE_MEMORY = NO;
+				RUNTIME_EXCEPTION_DEBUGGING_TOOL = NO;
+				RUNTIME_EXCEPTION_DISABLE_EXECUTABLE_PAGE_PROTECTION = NO;
+				RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = NO;
 				SDKROOT = macosx;
 			};
 			name = Debug;
