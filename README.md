@@ -11,12 +11,19 @@ Built for speed — open a `.md` file, read it, close it. First content visible 
 - **Progressive rendering** — first screen appears instantly, remaining content streams in
 - **120fps scrolling** — ProMotion support on compatible hardware (M1 Pro and later)
 - **Monospace toggle** — `Cmd+M` switches to fixed-width font for tables and structured content
+- **Native rendering mode** — optional AppKit `NSTextView` path (per-window menu toggle) for very large documents or AppKit-native text selection and search
 - **Finder-native** — double-click any `.md` file to open, drag onto dock icon, `Cmd+O` file picker
+
+## Install
+
+Download the latest signed and notarized DMG from the [Releases page](https://github.com/mitgor/mdviewer/releases/latest), open it, and drag **MDViewer.app** into `/Applications`.
+
+Universal binary (Apple Silicon + Intel), signed with Developer ID and notarized by Apple — no "unidentified developer" prompt.
 
 ## Requirements
 
 - macOS 13.0+
-- Xcode 15+ (to build)
+- Xcode 15+ (to build from source)
 
 ## Build
 
@@ -46,7 +53,7 @@ Or open `MDViewer.xcodeproj` in Xcode and hit Run.
 
 ## Architecture
 
-AppKit + WKWebView. Markdown is parsed with [cmark-gfm](https://github.com/apple/swift-cmark) (C library, <10ms for large files), converted to HTML, and rendered in a pre-warmed WKWebView with inlined CSS and bundled Mermaid.js.
+AppKit + WKWebView, with an optional native-text rendering path. Markdown is parsed with [cmark-gfm](https://github.com/github/cmark-gfm) (C library, vendored under `Vendor/cmark-gfm`, <10ms for large files). The default path converts the AST to HTML and renders it in a pre-warmed WKWebView with inlined CSS and bundled Mermaid.js; the native path walks the AST into an `NSAttributedString` rendered by `NSTextView`.
 
 ### Rendering Pipeline
 
