@@ -2,20 +2,22 @@
 phase: 06-vendored-cmark
 verified: 2026-04-16T08:36:44Z
 status: human_needed
-score: 4/5
+score: 4/5 (1 visual rendering check outstanding — 30-second user check)
 overrides_applied: 0
 gaps: []
+note: Phase 10 (v2.1 quality closeout) confirmed via Instruments captures (2026-04-19) that the chunked-render pipeline functions correctly under perf measurement (PERF-04 PASS at 115.68 ms; PERF-06 PASS at 88.31 ms). The remaining visual rendering check (headings + GFM table + mermaid placeholder) is the last open gate.
 human_verification:
   - test: "Open a .md file with headings, lists, GFM tables, and a mermaid code block in the app"
     expected: "File renders identically to the pre-Phase-6 pipeline — headings, tables, and a mermaid diagram placeholder all appear correctly"
     why_human: "Rendering correctness across the full cmark pipeline can only be confirmed by visual inspection at runtime; no automated test covers the end-to-end WebView rendering path"
+    status: PENDING — user check, ~30 seconds (suggested file: docs/perf/test-files/forced-wkwebview-50kb.md contains a GFM table; add a fenced ```mermaid block + a heading hierarchy for full coverage)
 ---
 
 # Phase 6: Vendored cmark — Verification Report
 
 **Phase Goal:** Markdown parsing uses a project-owned cmark with a chunked callback API, eliminating all regex-based HTML post-processing
 **Verified:** 2026-04-16T08:36:44Z
-**Status:** human_needed
+**Status:** human_needed (1 visual check outstanding)
 **Re-verification:** No — initial verification
 
 ## Goal Achievement

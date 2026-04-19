@@ -1,23 +1,27 @@
 ---
 phase: 08-streaming-pipeline
 verified: 2026-04-16T12:00:00Z
-status: human_needed
-score: 7/9 must-haves verified (2 require human testing)
+status: verified_with_followup
+score: 8/9 must-haves verified (1 deferred to PERF-11 follow-up REQ)
 overrides_applied: 0
+closed_at: 2026-04-19T14:30:00Z
+closed_by: Phase 10 (v2.1 quality closeout) — PERF-04 measurement at 115.68 ms; STRM-02 capture deferred to PERF-11
+followup_requirements: [PERF-11]
 human_verification:
   - test: "Confirm buffer reuse eliminates per-render String allocations"
     expected: "Instruments allocations trace shows assemblyBuffer heap block reused across calls — no new String allocation for prefix+chunk+suffix per render"
-    why_human: "removeAll(keepingCapacity:true) is present in code but whether the allocator actually retains the buffer in practice requires a live Instruments trace"
+    result: "DEFERRED → PERF-11. Capture session used Logging template + native-routing file; assemblyBuffer is exclusive to the WKWebView path. Re-capture procedure documented in docs/perf/v2.1-measurements.md entry #4."
   - test: "Confirm warm launch to first visible content is under 150ms (PERF-01)"
     expected: "open-to-paint OSSignposter interval ends in under 150ms for a warm launch of a large markdown file"
-    why_human: "Runtime performance measurement — cannot be verified by static code analysis. Must be measured with Instruments on actual hardware."
+    result: "PASS — 115.68 ms measured on M4 Max / macOS 26.4 (commit a2d609b). See docs/perf/v2.1-measurements.md entry #1 (PERF-04)."
 ---
 
 # Phase 8: Streaming Pipeline Verification Report
 
 **Phase Goal:** First visible content appears while the parser is still producing remaining chunks, closing the gap to sub-150ms warm launch
 **Verified:** 2026-04-16T12:00:00Z
-**Status:** human_needed
+**Closed:** 2026-04-19T14:30:00Z
+**Status:** verified_with_followup (PERF-11 filed for STRM-02 re-capture)
 **Re-verification:** No — initial verification
 
 ## Goal Achievement

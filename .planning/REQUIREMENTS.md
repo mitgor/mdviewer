@@ -7,13 +7,17 @@
 
 ### A. v2.1 Quality Closeout (Instruments + Sign-offs)
 
-- [ ] **PERF-04**: Warm launch to first visible content under 150ms for WKWebView path on M-series Mac, captured under Instruments with OSSignposter `open-to-paint` interval; numbers committed to `docs/perf/v2.1-measurements.md`
-- [ ] **PERF-05**: Warm launch to first visible content under 100ms for NSTextView path on M-series Mac, captured under Instruments; numbers committed to `docs/perf/v2.1-measurements.md`
-- [ ] **PERF-06**: 2nd-file open under 100ms with WKWebView pool active, captured under Instruments; numbers committed to `docs/perf/v2.1-measurements.md`
-- [ ] **PERF-07**: STRM-02 buffer-reuse effectiveness validated via Instruments allocations trace; net new String allocations per render documented in `docs/perf/v2.1-measurements.md`
-- [ ] **UAT-V21-01**: Phase 07 UAT pending scenario walked through and marked pass/fail in `.planning/phases/07-wkwebview-pool/07-HUMAN-UAT.md`
-- [ ] **UAT-V21-02**: Phase 08 UAT pending scenarios (2) walked through and marked pass/fail in `.planning/phases/08-streaming-pipeline/08-HUMAN-UAT.md`
-- [ ] **VRF-V21-01..04**: Phase 06–09 VERIFICATION reports updated from `human_needed` to `verified` (or findings filed as new requirements)
+- [x] **PERF-04**: Warm launch to first visible content under 150ms for WKWebView path — **PASS 115.68 ms** on M4 Max / macOS 26.4 (commit a2d609b). See `docs/perf/v2.1-measurements.md` entry #1.
+- [x] **PERF-05**: Warm launch to first visible content under 100ms for NSTextView path — **PASS 51.51 ms** on M4 Max / macOS 26.4. See `docs/perf/v2.1-measurements.md` entry #2.
+- [x] **PERF-06**: 2nd-file open under 100ms with WKWebView pool active — **PASS 88.31 ms** on M4 Max / macOS 26.4. See `docs/perf/v2.1-measurements.md` entry #3.
+- [ ] **PERF-07**: STRM-02 buffer-reuse effectiveness validated via Instruments allocations trace — **DEFERRED**. Captured trace used Logging template + native-routing file (assemblyBuffer is exclusive to WKWebView path). Re-capture filed as `PERF-11`.
+- [ ] **PERF-11**: Re-capture STRM-02 buffer reuse — Instruments **Allocations** template + `docs/perf/test-files/forced-wkwebview-50kb.md` (forces WKWebView path); open + close 5× via Cmd+W. Verify ≤1 fresh `_ContiguousArrayStorage<UInt8>` allocation across 5 renders. ~15 min on dev Mac.
+- [x] **UAT-V21-01**: Phase 07 UAT pending scenario (PERF-03) walked through and marked PASS in `.planning/phases/07-wkwebview-pool/07-HUMAN-UAT.md` (PERF-06 measurement covers it).
+- [~] **UAT-V21-02**: Phase 08 UAT pending scenarios — PERF-01 PASS, STRM-02 deferred to PERF-11. See `.planning/phases/08-streaming-pipeline/08-HUMAN-UAT.md`.
+- [~] **VRF-V21-01**: Phase 06 VERIFICATION updated. Perf side closed; **1 visual rendering check (headings + GFM table + mermaid placeholder) still pending — 30-second user check**.
+- [x] **VRF-V21-02**: Phase 07 VERIFICATION flipped from `human_needed` → `verified`.
+- [x] **VRF-V21-03**: Phase 08 VERIFICATION flipped from `human_needed` → `verified_with_followup` (PERF-11 filed).
+- [~] **VRF-V21-04**: Phase 09 VERIFICATION partially closed. PERF-02 PASS; **NATV-03 visual font check (Latin Modern Roman vs. Times fallback) still pending — 30-second user check**.
 
 ### B. CI-Driven Notarized Release Pipeline
 
@@ -76,9 +80,17 @@
 
 | Requirement | Phase (proposed) | Status |
 |-------------|------------------|--------|
-| PERF-04..07 | Phase 10 | Pending |
-| UAT-V21-01..02 | Phase 10 | Pending |
-| VRF-V21-01..04 | Phase 10 | Pending |
+| PERF-04 | Phase 10 | Complete (PASS 115.68 ms) |
+| PERF-05 | Phase 10 | Complete (PASS 51.51 ms) |
+| PERF-06 | Phase 10 | Complete (PASS 88.31 ms) |
+| PERF-07 | Phase 10 | Deferred → PERF-11 |
+| PERF-11 | Phase 10 / future | Open — Allocations re-capture pending |
+| UAT-V21-01 | Phase 10 | Complete (PASS) |
+| UAT-V21-02 | Phase 10 | Partial (PERF-01 PASS, STRM-02 → PERF-11) |
+| VRF-V21-01 | Phase 10 | Partial (1 visual check pending) |
+| VRF-V21-02 | Phase 10 | Complete |
+| VRF-V21-03 | Phase 10 | Complete with followup (PERF-11) |
+| VRF-V21-04 | Phase 10 | Partial (NATV-03 visual pending) |
 | CI-01..08, CI-10, CI-11 | Phase 11 plan 01 | Complete |
 | CI-09, CI-12 | Phase 11 plan 02 | Complete |
 | CI-13 | Phase 11 plan 02 Task 3 | Pending human dry-run |

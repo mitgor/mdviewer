@@ -1,20 +1,23 @@
 ---
 phase: 07-wkwebview-pool
 verified: 2026-04-16T10:00:00Z
-status: human_needed
-score: 9/10 must-haves verified
+status: verified
+score: 10/10 must-haves verified
 overrides_applied: 0
+closed_at: 2026-04-19T14:30:00Z
+closed_by: Phase 10 (v2.1 quality closeout) — PERF-06 measurement at 88.31 ms
 human_verification:
   - test: "Open a second markdown file while first is already open; measure open-to-paint signpost interval"
     expected: "OSSignposter 'open-to-paint' interval for the second file closes in under 100ms"
-    why_human: "PERF-03 (2nd+ file open under 100ms) cannot be verified via grep — requires running the app and reading Instruments or console signpost output"
+    result: "PASS — 88.31 ms measured on M4 Max / macOS 26.4 (commit a2d609b). See docs/perf/v2.1-measurements.md entry #3."
 ---
 
 # Phase 7: WKWebView Pool Verification Report
 
 **Phase Goal:** Opening a second (or subsequent) file delivers content to a pre-warmed WKWebView with zero initialization delay
 **Verified:** 2026-04-16T10:00:00Z
-**Status:** human_needed
+**Closed:** 2026-04-19T14:30:00Z
+**Status:** verified
 **Re-verification:** No — initial verification
 
 ## Goal Achievement

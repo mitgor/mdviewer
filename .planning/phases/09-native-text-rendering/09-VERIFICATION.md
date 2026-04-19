@@ -2,22 +2,26 @@
 phase: 09-native-text-rendering
 verified: 2026-04-16T15:10:00Z
 status: human_needed
-score: 4/5 must-haves verified
+score: 4.5/5 must-haves verified (PERF-02 closed; NATV-03 visual font check still pending — 30-second user check)
 overrides_applied: 0
+partial_close_at: 2026-04-19T14:30:00Z
+partial_close_by: Phase 10 (v2.1 quality closeout) — PERF-05 measurement at 51.51 ms closes the perf side; visual side outstanding
 human_verification:
   - test: "Visual typography match — native vs. web rendering"
     expected: "Latin Modern Roman font renders in NSTextView at body 16pt, h1 32pt, h2 24pt, h3 20pt with #333 text color and #1a3a6b link color matching the WKWebView path visually"
     why_human: "Font registration and rendering correctness can only be confirmed visually in the running app — OTF font may fall back to Times New Roman if bundle lookup fails at runtime"
+    status: PENDING — user check, ~30 seconds
   - test: "Sub-100ms warm launch for NSTextView path (PERF-02)"
     expected: "Instruments OSSignposter 'open-to-paint' interval for the native path is under 100ms on a warm launch"
-    why_human: "Performance measurement requires running Instruments with OSSignposter on the built app — cannot be verified statically"
+    result: "PASS — 51.51 ms measured on M4 Max / macOS 26.4 (commit a2d609b). See docs/perf/v2.1-measurements.md entry #2 (PERF-05)."
 ---
 
 # Phase 9: Native Text Rendering Verification Report
 
 **Phase Goal:** Simple markdown files (no mermaid, no GFM tables) render via NSTextView, bypassing WKWebView for dramatically faster display
 **Verified:** 2026-04-16T15:10:00Z
-**Status:** human_needed
+**Partial close:** 2026-04-19T14:30:00Z (PERF-02 perf side closed; visual NATV-03 still pending)
+**Status:** human_needed (1 visual check outstanding)
 **Re-verification:** No — initial verification
 
 ## Goal Achievement
