@@ -40,7 +40,7 @@
   6. **Pre-release gate:** A first end-to-end CI dry-run has been executed against a `v2.2.0-rc.1` pre-release tag and produced a notarized stapled DMG before any real `v2.2.0` cut
 **Plans**: 2 plans
   - [x] 11-01-PLAN.md — Workflow scaffold + signing + notarization (CI-01..08, CI-10, CI-11) — completed 2026-04-19
-  - [ ] 11-02-PLAN.md — Draft release publish + secrets docs + v2.2.0-rc.1 dry-run (CI-09, CI-12, CI-13)
+  - [~] 11-02-PLAN.md — Draft release publish + secrets docs + v2.2.0-rc.1 dry-run (CI-09, CI-12 ✓; CI-13 awaits human dry-run)
 
 ### Phase 12: Sparkle Auto-Update Integration
 
@@ -75,7 +75,7 @@
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 10. v2.1 Quality Closeout | 0/1 | Not started | - |
-| 11. CI Notarized Release Pipeline | 1/2 | In progress | - |
+| 11. CI Notarized Release Pipeline | 1.5/2 | Awaiting dry-run | - |
 | 12. Sparkle Auto-Update Integration | 0/3 | Not started | - |
 | 13. Homebrew Cask Distribution | 0/2 | Not started | - |
 

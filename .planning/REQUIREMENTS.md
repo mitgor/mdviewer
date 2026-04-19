@@ -25,11 +25,11 @@
 - [x] **CI-06**: On notarization failure, `xcrun notarytool log <submissionId>` is fetched and uploaded as a workflow artifact (plan 11-01)
 - [x] **CI-07**: Built binary is universal (arm64 + x86_64), signed with hardened runtime, with `--timestamp` (Scripts/build_and_sign.sh) (plan 11-01)
 - [x] **CI-08**: DMG built (`hdiutil create -format UDZO`), signed with the same identity, then stapled after notarization (Scripts/make_dmg.sh + Scripts/notarize.sh) (plan 11-01)
-- [ ] **CI-09**: Release published as **draft** by default (manual publish gate before appcast points at it)
+- [x] **CI-09**: Release published as **draft** by default; `prerelease` auto-set when tag contains `-` (softprops/action-gh-release SHA-pinned in release.yml) (plan 11-02)
 - [x] **CI-10**: Version derived from the git tag; CI stamps `CFBundleShortVersionString` and `CFBundleVersion` in `Info.plist` via `PlistBuddy` at build time (Scripts/set_version.sh) (plan 11-01)
 - [x] **CI-11**: dSYM bundle uploaded as a workflow artifact (90-day retention) (plan 11-01)
-- [ ] **CI-12**: All required secrets documented in `docs/release/ci-secrets.md`: `MAC_CERT_P12_BASE64`, `MAC_CERT_P12_PASSWORD`, `KEYCHAIN_PASSWORD`, `APPLE_TEAM_ID`, `ASC_API_KEY_ID`, `ASC_API_ISSUER_ID`, `ASC_API_KEY_P8_BASE64`, `SPARKLE_ED_PRIVATE_KEY`, `HOMEBREW_TAP_PAT`
-- [ ] **CI-13**: First end-to-end CI release dry-run executed against a `v2.2.0-rc.1` pre-release tag before the real `v2.2.0` cut
+- [x] **CI-12**: All required secrets documented in `docs/release/ci-secrets.md` with role minimums and rotation procedures (plan 11-02)
+- [ ] **CI-13**: First end-to-end CI release dry-run executed against a `v2.2.0-rc.1` pre-release tag before the real `v2.2.0` cut — **HUMAN ACTION REQUIRED, see plan 11-02 Task 3**
 
 ### C. Sparkle Auto-Update Integration
 
@@ -80,7 +80,8 @@
 | UAT-V21-01..02 | Phase 10 | Pending |
 | VRF-V21-01..04 | Phase 10 | Pending |
 | CI-01..08, CI-10, CI-11 | Phase 11 plan 01 | Complete |
-| CI-09, CI-12, CI-13 | Phase 11 plan 02 | Pending |
+| CI-09, CI-12 | Phase 11 plan 02 | Complete |
+| CI-13 | Phase 11 plan 02 Task 3 | Pending human dry-run |
 | SPK-01..12 | Phase 12 | Pending |
 | BREW-01..08 | Phase 13 | Pending |
 
