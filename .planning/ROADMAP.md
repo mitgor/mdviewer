@@ -38,7 +38,9 @@
   4. The GitHub Release is created as a **draft** by default (no appcast pointer flips automatically); `Info.plist` `CFBundleShortVersionString` and `CFBundleVersion` are stamped at build time from the git tag via `PlistBuddy`
   5. `docs/release/ci-secrets.md` documents every required secret (`MAC_CERT_P12_BASE64`, `MAC_CERT_P12_PASSWORD`, `KEYCHAIN_PASSWORD`, `APPLE_TEAM_ID`, `ASC_API_KEY_ID`, `ASC_API_ISSUER_ID`, `ASC_API_KEY_P8_BASE64`, `SPARKLE_ED_PRIVATE_KEY`, `HOMEBREW_TAP_PAT`) with the team API key role minimum and rotation procedure
   6. **Pre-release gate:** A first end-to-end CI dry-run has been executed against a `v2.2.0-rc.1` pre-release tag and produced a notarized stapled DMG before any real `v2.2.0` cut
-**Plans**: 2 (estimated)
+**Plans**: 2 plans
+  - [ ] 11-01-PLAN.md — Workflow scaffold + signing + notarization (CI-01..08, CI-10, CI-11)
+  - [ ] 11-02-PLAN.md — Draft release publish + secrets docs + v2.2.0-rc.1 dry-run (CI-09, CI-12, CI-13)
 
 ### Phase 12: Sparkle Auto-Update Integration
 
