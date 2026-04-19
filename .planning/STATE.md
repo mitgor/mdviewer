@@ -1,11 +1,11 @@
 ---
 gsd_state_version: 1.0
-milestone: none
-milestone_name: (between milestones — v2.1 shipped 2026-04-18)
-status: idle
-stopped_at: v2.1 milestone closed
-last_updated: "2026-04-18T15:00:00Z"
-last_activity: 2026-04-18
+milestone: v2.2
+milestone_name: Release Quality & Automation
+status: defining_requirements
+stopped_at: v2.2 opened — requirements pending
+last_updated: "2026-04-19T00:00:00Z"
+last_activity: 2026-04-19
 progress:
   total_phases: 0
   completed_phases: 0
@@ -18,18 +18,17 @@ progress:
 
 ## Project Reference
 
-See: `.planning/PROJECT.md` (updated 2026-04-18 at v2.1 close)
+See: `.planning/PROJECT.md` (updated 2026-04-19 — v2.2 opened)
 
 **Core value:** Open a markdown file and see beautifully rendered content instantly
-**Current focus:** None — v2.1 shipped; next milestone not yet scoped. Run `/gsd-new-milestone` to start.
+**Current focus:** v2.2 Release Quality & Automation — defining requirements.
 
 ## Current Position
 
-Phase: none
-Plan: none
-Status: between milestones
-
-Progress: (no active milestone)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-04-19 — Milestone v2.2 started
 
 ## Accumulated Context
 

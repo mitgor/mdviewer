@@ -40,7 +40,11 @@ Open a markdown file and see beautifully rendered content instantly — sub-200m
 
 ### Active
 
-_None. v2.1 shipped 2026-04-18; no milestone currently active._
+- [ ] Instruments measurement pass for v2.1 perf targets (PERF-01..03, STRM-02 buffer trace) — v2.2
+- [ ] UAT + VERIFICATION sign-off for v2.1 deferred items (2 UAT scenarios, 4 verification reports) — v2.2
+- [ ] CI-driven notarized release pipeline (GitHub Actions on tag push) — v2.2
+- [ ] Sparkle 2.x auto-update with EdDSA-signed appcast — v2.2
+- [ ] Homebrew cask in `mitgor/homebrew-tap`, auto-bumped on release — v2.2
 
 ### Out of Scope
 
@@ -65,9 +69,21 @@ v2.1 archives: [`milestones/v2.1-ROADMAP.md`](milestones/v2.1-ROADMAP.md) · [`m
 - **No release automation** — the archive/sign/notarize/DMG/publish flow runs manually on the developer Mac. A GitHub Actions workflow would make releases one-click.
 - *(resolved 2026-04-18)* v2.0 phases 01–05 archived retrospectively to [`milestones/v2.0-ROADMAP.md`](milestones/v2.0-ROADMAP.md) and [`milestones/v2.0-REQUIREMENTS.md`](milestones/v2.0-REQUIREMENTS.md). Phase directories removed from working tree; content retained in git history.
 
-## Current Milestone
+## Current Milestone: v2.2 Release Quality & Automation
 
-_None active. Run `/gsd-new-milestone` to scope v2.2._
+**Goal:** Close v2.1 quality debts (Instruments measurement, UAT/verification sign-off) and make future releases cheap by moving sign/notarize/publish into CI, adding Sparkle auto-update, and publishing via Homebrew.
+
+**Target features:**
+- Instruments measurement pass for v2.1 perf targets (PERF-01..03, STRM-02 heap trace)
+- UAT + VERIFICATION sign-off for v2.1 deferred items (6 total)
+- CI-driven notarized release pipeline (GitHub Actions on `v*` tag push)
+- Sparkle 2.x auto-update with EdDSA-signed appcast
+- Homebrew cask in `mitgor/homebrew-tap`, auto-bumped on release
+
+**Key context:**
+- New external surface: GitHub Actions, Sparkle framework dependency, Homebrew tap repo (separate from this one).
+- New secrets required: Developer ID `.p12` + password and App Store Connect API key (`.p8`/key ID/issuer ID) for CI signing/notarization.
+- No new user-facing rendering features in this milestone — those are v2.3+ candidates.
 
 ## Context
 
@@ -121,4 +137,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-18 after v2.1 milestone close (phases 06–09 shipped as [v2.1 release](https://github.com/mitgor/mdviewer/releases/tag/v2.1)).*
+*Last updated: 2026-04-19 — milestone v2.2 (Release Quality & Automation) opened.*
