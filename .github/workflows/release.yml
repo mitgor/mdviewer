@@ -1,0 +1,121 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+# Single-job design (per ARCHITECTURE.md sec 3): keychain handoff + artifact passing
+# between split jobs costs more than the (zero) parallelism benefit at this scale.
+# Plan 11-02 adds the publish/release-notes/cask-bump steps to this same job.
+
+permissions:
+  contents: write    # required for plan 11-02 (gh release create)
+
+concurrency:
+  # Prevent two simultaneous tag pushes from racing on the same artifact paths.
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: macos-26
+    timeout-minutes: 30
+    env:
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history needed for plan 11-02 release-notes generation
+
+      - name: Pin Xcode 26.2
+        # macos-26 default is 26.2 already - explicit select defends against runner image updates.
+        run: sudo xcode-select -s /Applications/Xcode_26.2.app
+
+      - name: Show toolchain
+        run: |
+          sw_vers
+          xcodebuild -version
+          /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" \
+            "$(xcode-select -p)/../version.plist" 2>/dev/null || true
+
+      - name: Derive version from tag
+        id: version
+        run: |
+          TAG="${GITHUB_REF_NAME}"        # e.g. v2.2.0-rc.1
+          VERSION="${TAG#v}"              # 2.2.0-rc.1
+          echo "tag=$TAG"         >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Tag: $TAG  Version: $VERSION"
+
+      - name: Stamp version into Info.plist (CI-10)
+        run: ./Scripts/set_version.sh "${{ steps.version.outputs.version }}"
+
+      - name: Cache SPM dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/Library/Developer/Xcode/DerivedData/**/SourcePackages
+            ~/Library/Caches/org.swift.swiftpm
+          key: spm-${{ runner.os }}-${{ hashFiles('Package.resolved', 'MDViewer.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}
+          restore-keys: spm-${{ runner.os }}-
+
+      # CI-03: pinned to the v6.0.0 commit SHA (b610f78488812c1e56b20e6df63ec42d833f2d14),
+      # NOT the tag - guards against tag-rewrite supply-chain attacks (T-11-01).
+      - name: Import Developer ID cert (CI-03)
+        uses: Apple-Actions/import-codesign-certs@b610f78488812c1e56b20e6df63ec42d833f2d14
+        with:
+          p12-file-base64: ${{ secrets.MAC_CERT_P12_BASE64 }}
+          p12-password:    ${{ secrets.MAC_CERT_P12_PASSWORD }}
+          # Action handles: create-keychain, set-key-partition-list (Pitfall #5),
+          # imports cert, deletes the keychain on job teardown.
+
+      - name: Discover signing identity SHA-1 (CI-04)
+        id: cert
+        run: ./Scripts/import_cert.sh "$APPLE_TEAM_ID"
+
+      - name: Build + sign universal hardened app (CI-07)
+        run: ./Scripts/build_and_sign.sh "${{ steps.cert.outputs.signing_id }}" "$APPLE_TEAM_ID"
+
+      - name: Build + sign DMG (CI-08)
+        run: ./Scripts/make_dmg.sh "${{ steps.cert.outputs.signing_id }}" "${{ steps.version.outputs.version }}"
+
+      - name: Notarize + staple (CI-05, CI-06, CI-08)
+        env:
+          ASC_API_KEY_P8_BASE64: ${{ secrets.ASC_API_KEY_P8_BASE64 }}
+          ASC_API_KEY_ID:        ${{ secrets.ASC_API_KEY_ID }}
+          ASC_API_ISSUER_ID:     ${{ secrets.ASC_API_ISSUER_ID }}
+        run: ./Scripts/notarize.sh "build/MDViewer-${{ steps.version.outputs.version }}.dmg"
+
+      - name: Verify release artifacts
+        run: ./Scripts/verify_release.sh "build/MDViewer-${{ steps.version.outputs.version }}.dmg"
+
+      # CI-06: notarytool log artifact uploaded WHENEVER the notarize step ran,
+      # success OR failure. `if: always()` ensures we get debug data even on rejection.
+      - name: Upload notarytool log (CI-06)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: notarytool-log
+          path: |
+            build/notarytool-submit.json
+            build/notarytool-log.json
+          if-no-files-found: ignore
+          retention-days: 30
+
+      # CI-11: dSYM bundle as workflow artifact.
+      - name: Upload dSYM bundle (CI-11)
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MDViewer-${{ steps.version.outputs.version }}-dSYMs
+          path: build/MDViewer.xcarchive/dSYMs/
+          if-no-files-found: error
+          retention-days: 90
+
+      # Plan 11-02 will add the next steps here:
+      #   - softprops/action-gh-release@<SHA> with draft: true (CI-09)
+      #     - upload build/MDViewer-${VERSION}.dmg as release asset
+      #   - (Sparkle appcast generation is Phase 12, NOT this phase)
+      #   - (Homebrew cask bump is Phase 13, NOT this phase)
