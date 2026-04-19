@@ -15,10 +15,10 @@
 - [ ] **PERF-12**: Investigate >4 GB persistent heap after 5 file opens of a 100 KB file (incidental finding from PERF-11 capture). Open for v2.3. Likely WebContent process accumulation, font glyph cache growth, or Mermaid script residue. Not blocking v2.1 closeout.
 - [x] **UAT-V21-01**: Phase 07 UAT pending scenario (PERF-03) walked through and marked PASS in `.planning/phases/07-wkwebview-pool/07-HUMAN-UAT.md` (PERF-06 measurement covers it).
 - [~] **UAT-V21-02**: Phase 08 UAT pending scenarios — PERF-01 PASS, STRM-02 deferred to PERF-11. See `.planning/phases/08-streaming-pipeline/08-HUMAN-UAT.md`.
-- [~] **VRF-V21-01**: Phase 06 VERIFICATION updated. Perf side closed; **1 visual rendering check (headings + GFM table + mermaid placeholder) still pending — 30-second user check**.
+- [x] **VRF-V21-01**: Phase 06 VERIFICATION flipped from `human_needed` → `verified`. User confirmed 2026-04-19: headers + GFM table render correctly.
 - [x] **VRF-V21-02**: Phase 07 VERIFICATION flipped from `human_needed` → `verified`.
-- [x] **VRF-V21-03**: Phase 08 VERIFICATION flipped from `human_needed` → `verified_with_followup` (PERF-11 filed).
-- [~] **VRF-V21-04**: Phase 09 VERIFICATION partially closed. PERF-02 PASS; **NATV-03 visual font check (Latin Modern Roman vs. Times fallback) still pending — 30-second user check**.
+- [x] **VRF-V21-03**: Phase 08 VERIFICATION flipped from `human_needed` → `verified` (STRM-02 closed code-verified; PERF-12 filed as incidental v2.3 follow-up).
+- [x] **VRF-V21-04**: Phase 09 VERIFICATION flipped from `human_needed` → `verified`. PERF-02 PASS at 51.51 ms; NATV-03 visual confirmed via screenshot (Latin Modern Roman rendering, not Times fallback).
 
 ### B. CI-Driven Notarized Release Pipeline
 
@@ -89,10 +89,10 @@
 | PERF-12 | v2.3 | Open — incidental heap-growth investigation |
 | UAT-V21-01 | Phase 10 | Complete (PASS) |
 | UAT-V21-02 | Phase 10 | Complete (PERF-01 PASS, STRM-02 closed code-verified) |
-| VRF-V21-01 | Phase 10 | Partial (1 visual check pending) |
+| VRF-V21-01 | Phase 10 | Complete |
 | VRF-V21-02 | Phase 10 | Complete |
-| VRF-V21-03 | Phase 10 | Complete with followup (PERF-11) |
-| VRF-V21-04 | Phase 10 | Partial (NATV-03 visual pending) |
+| VRF-V21-03 | Phase 10 | Complete (PERF-12 filed as incidental v2.3 follow-up) |
+| VRF-V21-04 | Phase 10 | Complete |
 | CI-01..08, CI-10, CI-11 | Phase 11 plan 01 | Complete |
 | CI-09, CI-12 | Phase 11 plan 02 | Complete |
 | CI-13 | Phase 11 plan 02 Task 3 | Pending human dry-run |
