@@ -17,17 +17,17 @@
 
 ### B. CI-Driven Notarized Release Pipeline
 
-- [ ] **CI-01**: `.github/workflows/release.yml` exists, triggered on `push: tags: [v*]`
-- [ ] **CI-02**: Workflow runs on `macos-26` runner (arm64) with Xcode 26.2 default toolchain
-- [ ] **CI-03**: Developer ID `.p12` imported into an ephemeral keychain via `Apple-Actions/import-codesign-certs@v6.0.0` (pinned to commit SHA)
-- [ ] **CI-04**: Code-signing identity disambiguated by SHA-1 fingerprint discovered dynamically via `security find-identity -v -p codesigning`, filtered by team ID `V7YK72YLFF` (CN alone is ambiguous in our keychain)
-- [ ] **CI-05**: Notarization uses App Store Connect API key (`.p8` + Key ID + Issuer ID) supplied via `--key/--key-id/--issuer`; key role is App Store Connect API "Team API Key" with Developer role minimum
-- [ ] **CI-06**: On notarization failure, `xcrun notarytool log <submissionId>` is fetched and uploaded as a workflow artifact
-- [ ] **CI-07**: Built binary is universal (arm64 + x86_64), signed with hardened runtime (`-o runtime`), with `--timestamp`
-- [ ] **CI-08**: DMG built (`hdiutil create -format UDZO`), signed with the same identity, then stapled after notarization
+- [x] **CI-01**: `.github/workflows/release.yml` exists, triggered on `push: tags: [v*]` (plan 11-01)
+- [x] **CI-02**: Workflow runs on `macos-26` runner (arm64) with Xcode 26.2 default toolchain (plan 11-01)
+- [x] **CI-03**: Developer ID `.p12` imported into an ephemeral keychain via `Apple-Actions/import-codesign-certs@b610f78488812c1e56b20e6df63ec42d833f2d14` (v6.0.0 SHA-pinned) (plan 11-01)
+- [x] **CI-04**: Code-signing identity disambiguated by SHA-1 fingerprint discovered dynamically via `security find-identity -v -p codesigning`, filtered by team ID `V7YK72YLFF` (Scripts/import_cert.sh) (plan 11-01)
+- [x] **CI-05**: Notarization uses App Store Connect API key (`.p8` + Key ID + Issuer ID) supplied via `--key/--key-id/--issuer` (Scripts/notarize.sh) (plan 11-01)
+- [x] **CI-06**: On notarization failure, `xcrun notarytool log <submissionId>` is fetched and uploaded as a workflow artifact (plan 11-01)
+- [x] **CI-07**: Built binary is universal (arm64 + x86_64), signed with hardened runtime, with `--timestamp` (Scripts/build_and_sign.sh) (plan 11-01)
+- [x] **CI-08**: DMG built (`hdiutil create -format UDZO`), signed with the same identity, then stapled after notarization (Scripts/make_dmg.sh + Scripts/notarize.sh) (plan 11-01)
 - [ ] **CI-09**: Release published as **draft** by default (manual publish gate before appcast points at it)
-- [ ] **CI-10**: Version derived from the git tag; CI stamps `CFBundleShortVersionString` and `CFBundleVersion` in `Info.plist` via `PlistBuddy` at build time (file in git stays at the last released version)
-- [ ] **CI-11**: dSYM bundle uploaded as a workflow artifact (insurance until a crash service is wired)
+- [x] **CI-10**: Version derived from the git tag; CI stamps `CFBundleShortVersionString` and `CFBundleVersion` in `Info.plist` via `PlistBuddy` at build time (Scripts/set_version.sh) (plan 11-01)
+- [x] **CI-11**: dSYM bundle uploaded as a workflow artifact (90-day retention) (plan 11-01)
 - [ ] **CI-12**: All required secrets documented in `docs/release/ci-secrets.md`: `MAC_CERT_P12_BASE64`, `MAC_CERT_P12_PASSWORD`, `KEYCHAIN_PASSWORD`, `APPLE_TEAM_ID`, `ASC_API_KEY_ID`, `ASC_API_ISSUER_ID`, `ASC_API_KEY_P8_BASE64`, `SPARKLE_ED_PRIVATE_KEY`, `HOMEBREW_TAP_PAT`
 - [ ] **CI-13**: First end-to-end CI release dry-run executed against a `v2.2.0-rc.1` pre-release tag before the real `v2.2.0` cut
 
@@ -79,7 +79,8 @@
 | PERF-04..07 | Phase 10 | Pending |
 | UAT-V21-01..02 | Phase 10 | Pending |
 | VRF-V21-01..04 | Phase 10 | Pending |
-| CI-01..13 | Phase 11 | Pending |
+| CI-01..08, CI-10, CI-11 | Phase 11 plan 01 | Complete |
+| CI-09, CI-12, CI-13 | Phase 11 plan 02 | Pending |
 | SPK-01..12 | Phase 12 | Pending |
 | BREW-01..08 | Phase 13 | Pending |
 
