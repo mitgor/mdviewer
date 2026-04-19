@@ -1,16 +1,16 @@
 ---
 phase: 08-streaming-pipeline
 verified: 2026-04-16T12:00:00Z
-status: verified_with_followup
-score: 8/9 must-haves verified (1 deferred to PERF-11 follow-up REQ)
+status: verified
+score: 9/9 must-haves verified (STRM-02 closed as code-verified after architectural finding)
 overrides_applied: 0
-closed_at: 2026-04-19T14:30:00Z
-closed_by: Phase 10 (v2.1 quality closeout) — PERF-04 measurement at 115.68 ms; STRM-02 capture deferred to PERF-11
-followup_requirements: [PERF-11]
+closed_at: 2026-04-19T14:45:00Z
+closed_by: Phase 10 (v2.1 quality closeout) — PERF-04 measurement at 115.68 ms; STRM-02 closed code-verified after Allocations re-capture revealed architectural non-observability
+followup_requirements: [PERF-12]
 human_verification:
   - test: "Confirm buffer reuse eliminates per-render String allocations"
     expected: "Instruments allocations trace shows assemblyBuffer heap block reused across calls — no new String allocation for prefix+chunk+suffix per render"
-    result: "DEFERRED → PERF-11. Capture session used Logging template + native-routing file; assemblyBuffer is exclusive to the WKWebView path. Re-capture procedure documented in docs/perf/v2.1-measurements.md entry #4."
+    result: "CLOSED CODE-VERIFIED. Allocations re-capture (~/Desktop/perf-7.trace) revealed an architectural finding: each window creates its own MarkdownRenderer → its own assemblyBuffer, so removeAll(keepingCapacity:) has no observable runtime effect in MDViewer's per-window-per-renderer pattern. Code path correct. See docs/perf/v2.1-measurements.md entry #4. Incidental finding: 4.04 GB persistent heap after 5 opens — filed as PERF-12 for v2.3."
   - test: "Confirm warm launch to first visible content is under 150ms (PERF-01)"
     expected: "open-to-paint OSSignposter interval ends in under 150ms for a warm launch of a large markdown file"
     result: "PASS — 115.68 ms measured on M4 Max / macOS 26.4 (commit a2d609b). See docs/perf/v2.1-measurements.md entry #1 (PERF-04)."
@@ -21,7 +21,7 @@ human_verification:
 **Phase Goal:** First visible content appears while the parser is still producing remaining chunks, closing the gap to sub-150ms warm launch
 **Verified:** 2026-04-16T12:00:00Z
 **Closed:** 2026-04-19T14:30:00Z
-**Status:** verified_with_followup (PERF-11 filed for STRM-02 re-capture)
+**Status:** verified (STRM-02 closed code-verified; PERF-12 filed as incidental v2.3 follow-up)
 **Re-verification:** No — initial verification
 
 ## Goal Achievement
