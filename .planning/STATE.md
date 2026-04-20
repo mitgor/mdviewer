@@ -2,17 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.2
 milestone_name: Release Quality & Automation
-status: in_progress
-stopped_at: Phase 11 plan 11-01 complete; plan 11-02 awaiting human checkpoint (v2.2.0-rc.1 dry-run)
-last_updated: "2026-04-19T10:20:00Z"
-last_activity: 2026-04-19
+status: ready_to_plan
+stopped_at: Plan 11-02 Task 3 human checkpoint (v2.2.0-rc.1 dry-run)
+last_updated: "2026-04-20T12:17:01.688Z"
+last_activity: 2026-04-20 -- Phase 10 execution started
 progress:
   total_phases: 4
-  completed_phases: 0
-  total_plans: 8
-  completed_plans: 1
-  plans_in_progress: 1
-  percent: 19
+  completed_phases: 2
+  total_plans: 3
+  completed_plans: 2
+  percent: 50
 ---
 
 # Project State
@@ -22,14 +21,14 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-04-19 — v2.2 opened)
 
 **Core value:** Open a markdown file and see beautifully rendered content instantly
-**Current focus:** Phase 11 — CI Notarized Release Pipeline — plan 11-01 complete, 11-02 in progress (awaiting human dry-run checkpoint).
+**Current focus:** Phase 10 — v21-quality-closeout
 
 ## Current Position
 
-Phase: 11 — CI Notarized Release Pipeline
-Plan: 11-02 — Draft release publish + secrets docs + v2.2.0-rc.1 dry-run
-Status: 11-01 complete (build/sign/notarize chain landed); 11-02 Tasks 1+2 complete; Task 3 is a human checkpoint (push v2.2.0-rc.1 tag, watch workflow, capture evidence in 11-DRY-RUN-LOG.md)
-Last activity: 2026-04-19 — Plan 11-01 completed, plan 11-02 paused at dry-run checkpoint
+Phase: 11
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-04-20
 
 ## Accumulated Context
 
@@ -38,10 +37,12 @@ Last activity: 2026-04-19 — Plan 11-01 completed, plan 11-02 paused at dry-run
 Decisions are logged in `PROJECT.md` Key Decisions table. Per-milestone summaries live in `milestones/vX.Y-ROADMAP.md`.
 
 Phase 11 plan 11-01 decisions:
+
 - Pinned `Apple-Actions/import-codesign-certs` at commit `b610f78488812c1e56b20e6df63ec42d833f2d14` (v6.0.0) inline rather than leaving placeholder for plan 11-02 (gh CLI was authenticated; saves a wasted commit downstream).
 - `ExportOptions.plist` at repo root has no `signingCertificate` key — identity is passed via `CODE_SIGN_IDENTITY=<SHA-1>` to `xcodebuild archive` so export inherits it. Putting the CN in the plist would re-introduce the two-cert ambiguity at export time.
 
 Phase 11 plan 11-02 decisions:
+
 - Pinned `softprops/action-gh-release` at commit `3bb12739c298aeb8a4eeaf626c5b8d85266b0e65` (v2 = release 2.6.2 at execution time).
 - `prerelease` flag derived from `contains(steps.version.outputs.tag, '-')` so `v*-rc.*` tags auto-mark as pre-release; `v*.*.*` proper releases do not.
 - `docs/release/ci-secrets.md` documents all 9 secrets including PHASE 12 (`SPARKLE_ED_PRIVATE_KEY`) and PHASE 13 (`HOMEBREW_TAP_PAT`) ones, marked clearly as "not yet consumed by current workflow" — operator-grade single source of truth.

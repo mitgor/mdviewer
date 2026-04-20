@@ -74,7 +74,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 10. v2.1 Quality Closeout | 0/1 | Not started | - |
+| 10. v2.1 Quality Closeout | 1/1 | Complete    | 2026-04-20 |
 | 11. CI Notarized Release Pipeline | 1.5/2 | Awaiting dry-run | - |
 | 12. Sparkle Auto-Update Integration | 0/3 | Not started | - |
 | 13. Homebrew Cask Distribution | 0/2 | Not started | - |
