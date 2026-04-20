@@ -120,6 +120,7 @@ v2.1 archives: [`milestones/v2.1-ROADMAP.md`](milestones/v2.1-ROADMAP.md) · [`m
 | Unified modulemap for cmark | Xcode 26 explicit modules required merging cmark_gfm + extensions | ✓ Good |
 | WebViewPool over single preWarmedContentView | Generalizes pre-warm to pool of 2 with auto-replenishment and crash recovery | ✓ Good |
 | pendingFileOpens guard | NSOpenPanel close triggers applicationShouldTerminateAfterLastWindowClosed before async render completes | ✓ Good |
+| arm64-only DMG from v2.2 (2026-04-20) | Xcode 26.2 on macos-26 runners has no x86_64 prebuilt swiftmodules for internal stdlib (`_DarwinFoundation2/3`, `_SwiftConcurrencyShims`, `simd`); `SWIFT_ENABLE_EXPLICIT_MODULES=NO` fallback hits `redefinition of module 'cmark_gfm'`. Evidence: CI runs 24688263027 (rc.3) + 24688479386 (rc.4). Intel-Mac install base on macOS 13+ is a minimal long tail of 2018–2019 hardware; v2.1 arm64+x86_64 DMG remains available for them. Reconsider if Xcode reintroduces x86_64 prebuilts. | ✓ Accepted tradeoff |
 
 ## Evolution
 
@@ -139,4 +140,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-19 — milestone v2.2 (Release Quality & Automation) opened.*
+*Last updated: 2026-04-20 — arm64-only DMG decision logged during Phase 12 RC dry-run.*

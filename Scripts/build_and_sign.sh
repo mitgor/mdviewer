@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 # Usage: build_and_sign.sh <signing-id-sha1> <team-id>
-# Produces build/export/MDViewer.app universal (arm64 + x86_64), hardened runtime, signed.
+# Produces build/export/MDViewer.app arm64, hardened runtime, signed.
+# v2.2+: arm64-only (see PROJECT.md Key Decisions 2026-04-20: x86_64 drop).
+# Xcode 26.2 on macos-26 runners ships no x86_64 prebuilt swiftmodules for the
+# internal stdlib (_DarwinFoundation2/3, _SwiftConcurrencyShims, simd), and
+# forcing implicit-module rebuilds hit "redefinition of module 'cmark_gfm'"
+# — toolchain-level, not a code-level, issue. Evidence: workflow runs
+# 24688263027 (rc.3) and 24688479386 (rc.4).
 set -euo pipefail
 
 SIGNING_ID="${1:?signing-id (SHA-1) required}"
@@ -14,14 +20,14 @@ xcodegen generate
 
 mkdir -p build
 
-# Archive — universal binary, hardened runtime, manual signing with SHA-1 identity.
+# Archive — arm64, hardened runtime, manual signing with SHA-1 identity.
 xcodebuild archive \
   -project MDViewer.xcodeproj \
   -scheme MDViewer \
   -configuration Release \
   -archivePath build/MDViewer.xcarchive \
   -destination 'generic/platform=macOS' \
-  ARCHS="arm64 x86_64" \
+  ARCHS="arm64" \
   ONLY_ACTIVE_ARCH=NO \
   CODE_SIGN_STYLE=Manual \
   DEVELOPMENT_TEAM="$TEAM_ID" \
@@ -42,13 +48,13 @@ xcodebuild -exportArchive \
 codesign -dvvv build/export/MDViewer.app 2>&1 | grep -E "flags=.*runtime" \
   || { echo "::error::Hardened Runtime is NOT enabled on the archive"; exit 1; }
 
-# Verify universal arch (success criterion #2).
+# Verify arm64 arch (v2.2+ Success Criterion #2, amended 2026-04-20).
 APP_BIN="build/export/MDViewer.app/Contents/MacOS/MDViewer"
 ARCHS=$(lipo -archs "$APP_BIN")
 echo "Built archs: $ARCHS"
-if [[ "$ARCHS" != *"arm64"* ]] || [[ "$ARCHS" != *"x86_64"* ]]; then
-  echo "::error::App is not universal (arm64 + x86_64). Got: $ARCHS"
+if [[ "$ARCHS" != "arm64" ]]; then
+  echo "::error::App is not arm64-only. Got: '$ARCHS' (expected exactly 'arm64')."
   exit 1
 fi
 
-echo "Built build/export/MDViewer.app: signed, hardened, universal"
+echo "Built build/export/MDViewer.app: signed, hardened, arm64"

@@ -33,7 +33,7 @@
 **Requirements**: CI-01, CI-02, CI-03, CI-04, CI-05, CI-06, CI-07, CI-08, CI-09, CI-10, CI-11, CI-12, CI-13
 **Success Criteria** (what must be TRUE):
   1. `.github/workflows/release.yml` runs end-to-end on a `macos-26` arm64 runner with Xcode 26.2, triggered by `push: tags: [v*]`, completing in <30 minutes
-  2. The published DMG is universal (`lipo -info` shows `arm64 x86_64`), hardened-runtime + secure-timestamp signed with the Developer ID identity disambiguated by SHA-1 (team `V7YK72YLFF`), and `xcrun stapler validate` passes
+  2. The published DMG is arm64 (`lipo -info` shows `arm64`), hardened-runtime + secure-timestamp signed with the Developer ID identity disambiguated by SHA-1 (team `V7YK72YLFF`), and `xcrun stapler validate` passes *(amended 2026-04-20 during Phase 12 RC dry-run: dropped x86_64 — Xcode 26.2 on macos-26 runners has no x86_64 prebuilt swiftmodules for internal stdlib and implicit-module fallback hit cmark_gfm redefinition; see PROJECT.md Key Decisions)*
   3. On notarization failure the workflow uploads `xcrun notarytool log <submissionId>` output as a workflow artifact, and on success a dSYM bundle is uploaded as a workflow artifact
   4. The GitHub Release is created as a **draft** by default (no appcast pointer flips automatically); `Info.plist` `CFBundleShortVersionString` and `CFBundleVersion` are stamped at build time from the git tag via `PlistBuddy`
   5. `docs/release/ci-secrets.md` documents every required secret (`MAC_CERT_P12_BASE64`, `MAC_CERT_P12_PASSWORD`, `KEYCHAIN_PASSWORD`, `APPLE_TEAM_ID`, `ASC_API_KEY_ID`, `ASC_API_ISSUER_ID`, `ASC_API_KEY_P8_BASE64`, `SPARKLE_ED_PRIVATE_KEY`, `HOMEBREW_TAP_PAT`) with the team API key role minimum and rotation procedure
