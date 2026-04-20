@@ -81,6 +81,12 @@ jobs:
       - name: Build + sign DMG (CI-08)
         run: ./Scripts/make_dmg.sh "${{ steps.cert.outputs.signing_id }}" "${{ steps.version.outputs.version }}"
 
+      - name: Verify bundle layout (SPK-10)
+        # Cheap smoke test BEFORE the ~5min notarize step. Guards against
+        # SPM double-framework regression + team-ID-mismatch on XPCs +
+        # missing Sparkle Info.plist keys + non-integer CFBundleVersion.
+        run: ./Scripts/verify_bundle.sh build/export/MDViewer.app "$APPLE_TEAM_ID"
+
       - name: Notarize + staple (CI-05, CI-06, CI-08)
         env:
           ASC_API_KEY_P8_BASE64: ${{ secrets.ASC_API_KEY_P8_BASE64 }}
@@ -90,6 +96,16 @@ jobs:
 
       - name: Verify release artifacts
         run: ./Scripts/verify_release.sh "build/MDViewer-${{ steps.version.outputs.version }}.dmg"
+
+      - name: Generate EdDSA-signed appcast (SPK-06, SPK-07, SPK-09, SPK-12)
+        # Runs AFTER notarize+staple+verify_release so the DMG is final —
+        # any byte change after signature computation would invalidate it.
+        # Key materialised via stdin per Pitfall B; nothing touches disk.
+        # NOTE: no `set -x` here; secret is redacted by GitHub but the
+        # redaction is best-effort on process-level stdout, not on shell tracing.
+        env:
+          SPARKLE_ED_PRIVATE_KEY: ${{ secrets.SPARKLE_ED_PRIVATE_KEY }}
+        run: ./Scripts/generate_appcast.sh "${{ steps.version.outputs.version }}" "build/MDViewer-${{ steps.version.outputs.version }}.dmg"
 
       # CI-06: notarytool log artifact uploaded WHENEVER the notarize step ran,
       # success OR failure. `if: always()` ensures we get debug data even on rejection.
@@ -129,7 +145,7 @@ jobs:
           generate_release_notes: true
           files: |
             build/MDViewer-${{ steps.version.outputs.version }}.dmg
+            build/appcast.xml
           fail_on_unmatched_files: true
 
-      # (Sparkle appcast generation is Phase 12, NOT this phase)
       # (Homebrew cask bump is Phase 13, NOT this phase)
