@@ -29,9 +29,17 @@ jobs:
         with:
           fetch-depth: 0   # full history needed for plan 11-02 release-notes generation
 
-      - name: Pin Xcode 26.2
-        # macos-26 default is 26.2 already - explicit select defends against runner image updates.
-        run: sudo xcode-select -s /Applications/Xcode_26.2.app
+      - name: Pin Xcode 26.4
+        # Xcode 26.2 has a regression building the vendored cmark-gfm modulemap
+        # layout (extensions target auto-synthesizes a module while the static
+        # cmark-gfm target already declares it with an explicit MODULEMAP_FILE →
+        # "Redefinition of module 'cmark_gfm'"). Xcode 26.4 handles it cleanly.
+        # Evidence: CI runs 24688479386 (rc.4) + 24688714386 (rc.5) on 26.2 fail
+        # in cmark-gfm-extensions; local Xcode 26.4.1 builds green. If the runner
+        # image drops 26.4 in the future, bump to whatever's latest — do NOT
+        # revert to 26.2 without a defensive CLANG_ENABLE_MODULES=NO on the
+        # cmark-gfm-extensions target.
+        run: sudo xcode-select -s /Applications/Xcode_26.4.app
 
       - name: Show toolchain
         run: |
