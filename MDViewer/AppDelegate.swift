@@ -1,5 +1,6 @@
 import Cocoa
 import os
+import Sparkle
 import UniformTypeIdentifiers
 import WebKit
 import cmark_gfm
@@ -11,6 +12,18 @@ private let appSignposter = OSSignposter(
 
 class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate, NativeContentViewDelegate {
     private let renderer = MarkdownRenderer()
+
+    // Sparkle: long-lived updater controller. startingUpdater: true kicks off
+    // the scheduled check timer immediately; if this property were deallocated,
+    // the timer would die silently (Pitfall: property captures matter here).
+    // Delegates are both nil — the standard UI + standard behaviour is what we want;
+    // we have no custom per-version checks or preferences window.
+    private let updaterController = SPUStandardUpdaterController(
+        startingUpdater: true,
+        updaterDelegate: nil,
+        userDriverDelegate: nil
+    )
+
     private var template: SplitTemplate?
     private var windows: [MarkdownWindow] = []
     private var openedViaDelegate = false
@@ -329,6 +342,18 @@ class AppDelegate: NSObject, NSApplicationDelegate, WebContentViewDelegate, Nati
         let appMenuItem = NSMenuItem()
         let appMenu = NSMenu()
         appMenu.addItem(withTitle: "About MDViewer", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
+
+        // Sparkle: selector lives on the controller, not on AppDelegate, so we set
+        // target explicitly. Without this, the menu item would walk the responder
+        // chain and find nothing. No keyEquivalent — Sparkle doesn't claim one.
+        let checkForUpdatesItem = NSMenuItem(
+            title: "Check for Updates…",
+            action: #selector(SPUStandardUpdaterController.checkForUpdates(_:)),
+            keyEquivalent: ""
+        )
+        checkForUpdatesItem.target = updaterController
+        appMenu.addItem(checkForUpdatesItem)
+
         appMenu.addItem(.separator())
         appMenu.addItem(withTitle: "Quit MDViewer", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         appMenuItem.submenu = appMenu
