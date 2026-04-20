@@ -4,6 +4,12 @@ A fast, native macOS markdown viewer with LaTeX-inspired typography and Mermaid 
 
 Built for speed — open a `.md` file, read it, close it. First content visible in under 200ms.
 
+> **Upgrading from v2.1?** v2.1 predates the built-in auto-update mechanism.
+> Download [the latest release](https://github.com/mitgor/mdviewer/releases/latest)
+> manually **once** — from v2.2 onward, MDViewer will check for new releases
+> automatically (daily, with EdDSA-signed verification). No telemetry, no
+> opt-in prompt, no account required.
+
 ## Features
 
 - **LaTeX typography** — Latin Modern Roman font, booktabs-style tables, clean heading hierarchy
