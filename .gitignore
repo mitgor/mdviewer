@@ -10,3 +10,10 @@ dist/
 /MDViewer.app/
 *.profraw
 /Screenshot*.png
+# Swift Package Manager build artifacts at repo root. Xcode is the
+# canonical builder; the tracked lockfile lives under
+# MDViewer.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+# (added by Plan 12-01 Task 2). Root Package.resolved is an incidental
+# byproduct of `swift` CLI resolving Package.swift — not the source of truth.
+.build/
+/Package.resolved

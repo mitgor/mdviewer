@@ -4,6 +4,10 @@ settings:
     MACOSX_DEPLOYMENT_TARGET: "13.0"
     SWIFT_VERSION: "5.9"
     GENERATE_INFOPLIST_FILE: NO
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: "2.9.1"
 targets:
   cmark-gfm:
     type: library.static
@@ -55,6 +59,7 @@ targets:
     dependencies:
       - target: cmark-gfm
       - target: cmark-gfm-extensions
+      - package: Sparkle
   MDViewerTests:
     type: bundle.unit-test
     platform: macOS
