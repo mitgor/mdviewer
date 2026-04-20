@@ -28,8 +28,6 @@ xcodebuild archive \
   CODE_SIGN_IDENTITY="$SIGNING_ID" \
   ENABLE_HARDENED_RUNTIME=YES \
   OTHER_CODE_SIGN_FLAGS="--timestamp" \
-  SWIFT_ENABLE_EXPLICIT_MODULES=NO \
-  CLANG_ENABLE_MODULE_VERIFIER=NO \
   | xcbeautify --renderer github-actions || true
 
 # Export — re-uses ExportOptions.plist at repo root.
