@@ -442,16 +442,81 @@ any reasonable time window.
 
 **Mitigation (Critical Pre-Release Gate #1 from REQUIREMENTS.md):** the
 private key MUST be backed up to at least one offline location BEFORE the
-first Sparkle-enabled release ships. Recommended TWO locations:
+first Sparkle-enabled release ships. Recommended TWO locations; the operator
+currently maintains ONE (see "Current backup inventory" below):
 
-1. **Primary backup location:** _DOCUMENT HERE WHEN BACKUP IS CREATED_
-   (e.g. "1Password vault: 'MDViewer Release Keys' entry, created
-   YYYY-MM-DD")
-2. **Secondary backup location:** _DOCUMENT HERE WHEN BACKUP IS CREATED_
-   (e.g. "Hardware token / encrypted USB drive in [physical location]")
+1. **Primary backup location:** Encrypted USB drive, operator-controlled,
+   stored offline at a physical location under the operator's direct
+   custody. Established 2026-04-20 during the Phase 12 Plan 03 Task 3
+   key-generation ritual.
+2. **Secondary backup location:** _NOT CONFIGURED AT THIS TIME._ The
+   operator has consciously elected a single-offline-backup configuration
+   for the initial Sparkle ship. See the deviation note under "Provenance"
+   below for the risk-acceptance rationale and the roadmap-level criterion
+   this configuration satisfies.
 
-Operator must update this section at Phase 12 launch with the actual backup
-locations (NEVER the key bytes themselves — only WHERE the backup lives).
+Operator must update this section when (if) a second offline backup is
+added in the future. NEVER record key bytes here — only LOCATION
+descriptions.
+
+### Provenance
+
+- **Key pair generated:** 2026-04-20 by `generate_keys` from the Sparkle
+  2.9.1 SPM artefact bundle (`~/Library/Developer/Xcode/DerivedData/.../
+  SourcePackages/artifacts/sparkle/Sparkle/bin/generate_keys`), during the
+  Phase 12 Plan 03 Task 3 interactive ritual.
+- **Key format:** 44-character base64-encoded 32-byte Ed25519 private
+  scalar (Sparkle 2.9.1 default). Note: the Plan 12-03 prose documented an
+  expected export size of 88–89 bytes based on older Sparkle-release
+  guidance; Sparkle 2.9.1 currently produces a 44-byte base64 representation
+  and both `generate_appcast` and `sign_update` accept it natively. Future
+  operators should expect 44 bytes, not 88.
+- **Public key committed:** `MDViewer/Info.plist` `SUPublicEDKey` at commit
+  `b6bdc76` (Plan 12-03 Task 4). Pre-commit diff replaced the Plan 12-01
+  placeholder (`PHASE12PLACEHOLDER0000000000000000000000000=`).
+- **Private key installed as GitHub Secret:** `SPARKLE_ED_PRIVATE_KEY` at
+  `2026-04-20T19:44:33Z` on `mitgor/mdviewer` (verified via
+  `gh secret list`).
+- **Private key preserved in macOS Keychain:** entry
+  `"Private key for signing Sparkle updates"` / service
+  `https://sparkle-project.org` on the developer Mac. Required for future
+  local `generate_appcast` testing; intentionally retained.
+- **Plaintext export deleted:** `~/Desktop/sparkle_private_key.txt` removed
+  after GitHub-Secret install and offline-backup completion (2026-04-20).
+  Not present in filesystem or Trash.
+- **First appcast-signing use:** `v2.2.0-rc.2` dry-run (Phase 12 Plan 03
+  Task 7).
+
+#### Single-offline-backup configuration (deviation from Plan 12-03)
+
+Plan 12-03 Task 3 and the plan-level Success Criterion #5 asked for TWO
+offline backup locations. The operator has elected a SINGLE-offline-backup
+configuration:
+
+- **Configuration chosen:** one offline backup (encrypted USB, operator-
+  controlled) + the GitHub Secret = two TOTAL copies of the private key,
+  but only ONE of them is offline.
+- **Roadmap-level criterion satisfied:** Phase 12 Success Criterion #5 in
+  `.planning/milestones/v2.2-ROADMAP.md` requires "at least one documented
+  offline location in addition to the GitHub secret" — this single-offline
+  configuration MEETS the roadmap-level criterion.
+- **Plan-level criterion not fully met:** Plan 12-03's stricter two-offline
+  ask is not met. Operator has explicitly accepted the residual risk:
+  simultaneous loss of the USB AND the GitHub Secret would be catastrophic
+  and permanent (no future Sparkle update could ever reach v2.2+ installs —
+  see "Consequences of loss" above).
+- **Future mitigation path (recommended, not yet performed):** add a second
+  offline backup (1Password Personal vault entry, YubiKey PIV slot, paper
+  printout in a physical safe, or similar) before MDViewer has a large
+  enough user base that a permanent update-loss event would be materially
+  harmful to users. This is a low-effort operation; the generate_keys step
+  does not need to re-run — the existing private key can be re-exported
+  from the Keychain or copied from the primary backup to a second medium.
+
+Also see `docs/release/sparkle-setup.md` for the full first-time setup
+runbook covering `generate_keys` invocation, export, GitHub-Secrets
+installation, and the two-offline-backup discipline (including why it
+matters and how to add a second backup later).
 
 ---
 
