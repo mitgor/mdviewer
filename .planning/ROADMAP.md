@@ -55,8 +55,8 @@
   5. **Pre-release gate (key durability):** The EdDSA private key has been backed up to at least one documented offline location in addition to the GitHub secret, and the backup procedure is captured in `docs/release/ci-secrets.md` (loss = no future Sparkle updates can ever reach v2.2 installs)
   6. **Pre-release gate (migration):** README has a one-time manual-update notice for v2.1 users explaining that v2.1 predates Sparkle and they must download v2.2 manually once
 **Plans**: 3 plans
-  - [ ] 12-01-PLAN.md — Sparkle SPM dep + Info.plist config + AppDelegate menu wiring (SPK-01, SPK-03, SPK-04, SPK-05)
-  - [ ] 12-02-PLAN.md — CI appcast pipeline: verify_bundle.sh + generate_appcast.sh + release.yml extension (SPK-06, SPK-07, SPK-09, SPK-10, SPK-12)
+  - [x] 12-01-PLAN.md — Sparkle SPM dep + Info.plist config + AppDelegate menu wiring (SPK-01, SPK-03, SPK-04, SPK-05) — completed 2026-04-20
+  - [x] 12-02-PLAN.md — CI appcast pipeline: verify_bundle.sh + generate_appcast.sh + release.yml extension (SPK-06, SPK-07, SPK-09, SPK-10, SPK-12) — completed 2026-04-20
   - [ ] 12-03-PLAN.md — Pre-release gates: CFBundleVersion migration + EdDSA keygen ritual + README notice + v2.2.0-rc.2 dry-run (SPK-02, SPK-08, SPK-11)
 
 ### Phase 13: Homebrew Cask Distribution
@@ -79,7 +79,7 @@
 |-------|----------------|--------|-----------|
 | 10. v2.1 Quality Closeout | 1/1 | Complete    | 2026-04-20 |
 | 11. CI Notarized Release Pipeline | 1.5/2 | Awaiting dry-run | - |
-| 12. Sparkle Auto-Update Integration | 0/3 | Not started | - |
+| 12. Sparkle Auto-Update Integration | 2/3 | Wave 1 complete; 12-03 pending | - |
 | 13. Homebrew Cask Distribution | 0/2 | Not started | - |
 
 ---
