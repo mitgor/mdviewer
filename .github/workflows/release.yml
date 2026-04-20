@@ -83,7 +83,7 @@ jobs:
         id: cert
         run: ./Scripts/import_cert.sh "$APPLE_TEAM_ID"
 
-      - name: Build + sign universal hardened app (CI-07)
+      - name: Build + sign arm64 hardened app (CI-07)
         run: ./Scripts/build_and_sign.sh "${{ steps.cert.outputs.signing_id }}" "$APPLE_TEAM_ID"
 
       - name: Build + sign DMG (CI-08)

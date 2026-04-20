@@ -1,17 +1,18 @@
 #!/usr/bin/env bash
 # Usage: verify_release.sh <dmg-path>
-# Final gate: confirms the DMG is universal, signed, hardened, stapled.
+# Final gate: confirms the DMG is arm64, signed, hardened, stapled.
+# v2.2+: arm64-only (see PROJECT.md Key Decisions 2026-04-20: x86_64 drop).
 # Run after notarize.sh; failure here means do NOT publish.
 set -euo pipefail
 
 DMG_PATH="${1:?dmg path required}"
 APP_PATH="build/export/MDViewer.app"
 
-# 1. App is universal.
+# 1. App is arm64 (v2.2+ SC#2 amended 2026-04-20).
 ARCHS=$(lipo -archs "$APP_PATH/Contents/MacOS/MDViewer")
-[[ "$ARCHS" == *"arm64"* && "$ARCHS" == *"x86_64"* ]] \
-  || { echo "::error::not universal: $ARCHS"; exit 1; }
-echo "PASS universal: $ARCHS"
+[[ "$ARCHS" == "arm64" ]] \
+  || { echo "::error::not arm64-only: '$ARCHS' (expected exactly 'arm64')"; exit 1; }
+echo "PASS arm64: $ARCHS"
 
 # 2. App has hardened runtime.
 codesign -dvvv "$APP_PATH" 2>&1 | grep -E "flags=.*runtime" >/dev/null \
