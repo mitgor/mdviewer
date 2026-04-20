@@ -48,7 +48,7 @@
 	<key>SUFeedURL</key>
 	<string>https://github.com/mitgor/mdviewer/releases/latest/download/appcast.xml</string>
 	<key>SUPublicEDKey</key>
-	<string>PHASE12PLACEHOLDER0000000000000000000000000=</string>
+	<string>c7OOb7oj9UNlcQyjkANR7cPqfC+n/5r4EbvVIynhGWI=</string>
 	<key>SUScheduledCheckInterval</key>
 	<integer>86400</integer>
 	<key>UTImportedTypeDeclarations</key>
