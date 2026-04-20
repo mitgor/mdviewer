@@ -37,11 +37,11 @@ Open a markdown file and see beautifully rendered content instantly — sub-200m
 - ✓ Streaming parse-to-render pipeline with buffer-reuse first-page assembly — v2.1 Phase 8
 - ✓ Native NSTextView backend (AST → NSAttributedString) for mermaid/table-free files — v2.1 Phase 9
 - ✓ Signed Developer ID + notarized DMG release pipeline — v2.1 release
+- ✓ Instruments measurement pass for v2.1 perf targets (PERF-04..07 on M4 Max — PERF-04 115.68ms, PERF-05 51.51ms, PERF-06 88.31ms; PERF-07 closed code-verified) — v2.2 Phase 10
+- ✓ UAT + VERIFICATION sign-off for v2.1 deferred items (Phase 07 + Phase 08 HUMAN-UAT complete, 4 VERIFICATION files flipped human_needed → verified) — v2.2 Phase 10
 
 ### Active
 
-- [ ] Instruments measurement pass for v2.1 perf targets (PERF-01..03, STRM-02 buffer trace) — v2.2
-- [ ] UAT + VERIFICATION sign-off for v2.1 deferred items (2 UAT scenarios, 4 verification reports) — v2.2
 - [ ] CI-driven notarized release pipeline (GitHub Actions on tag push) — v2.2
 - [ ] Sparkle 2.x auto-update with EdDSA-signed appcast — v2.2
 - [ ] Homebrew cask in `mitgor/homebrew-tap`, auto-bumped on release — v2.2
@@ -59,14 +59,16 @@ Open a markdown file and see beautifully rendered content instantly — sub-200m
 ## Current State
 
 **Shipped:** v2.1 Deep Optimization (2026-04-18) — [Release](https://github.com/mitgor/mdviewer/releases/tag/v2.1).
+**v2.2 progress:** Phase 10 (v2.1 quality closeout) complete — v2.1 perf targets measured, UAT/VERIFICATION signed off. Phase 11 (CI notarized release) complete pending human dry-run checkpoint (CI-13).
 
 v2.1 archives: [`milestones/v2.1-ROADMAP.md`](milestones/v2.1-ROADMAP.md) · [`milestones/v2.1-REQUIREMENTS.md`](milestones/v2.1-REQUIREMENTS.md).
 
 ### Open Concerns (candidates for next milestone)
 
-- **Sub-100ms warm launch** — target from v2.1 is instrumented but not yet measured on the shipped build. Last recorded measurement was 184.50ms on M4 Max pre-v2.1. The path is `OSSignposter(open-to-paint)`; run under Instruments.
-- **Deferred human verification** — 2 UAT scenarios (phase 7, 8) and 4 VERIFICATION sign-offs (phases 6–9) acknowledged at close; see [`STATE.md`](STATE.md) Deferred Items.
-- **No release automation** — the archive/sign/notarize/DMG/publish flow runs manually on the developer Mac. A GitHub Actions workflow would make releases one-click.
+- **PERF-12** — >4 GB persistent heap after 5 opens of a 100 KB file (incidental finding from PERF-11 Allocations trace). Likely WebContent process accumulation / font glyph growth / Mermaid script residue. Deferred to v2.3.
+- **Next up in v2.2:** Phase 12 (Sparkle auto-update integration) and Phase 13 (Homebrew cask distribution). Phase 11 CI-13 dry-run is the remaining human checkpoint for Phase 11.
+- *(resolved 2026-04-19)* Sub-100ms / sub-150ms warm launch targets — measured on M4 Max: PERF-04 115.68ms, PERF-05 51.51ms, PERF-06 88.31ms. All PASS.
+- *(resolved 2026-04-19)* Deferred human verification — all 2 UAT scenarios + 4 VERIFICATION sign-offs closed in Phase 10.
 - *(resolved 2026-04-18)* v2.0 phases 01–05 archived retrospectively to [`milestones/v2.0-ROADMAP.md`](milestones/v2.0-ROADMAP.md) and [`milestones/v2.0-REQUIREMENTS.md`](milestones/v2.0-REQUIREMENTS.md). Phase directories removed from working tree; content retained in git history.
 
 ## Current Milestone: v2.2 Release Quality & Automation
